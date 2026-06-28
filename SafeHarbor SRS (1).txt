@@ -1,0 +1,603 @@
+SafeHarbor - Disaster Response & Emergency Coordination Platform
+Table of Contents
+? Project Overview
+? Technology Stack
+? Project Structure
+? Dependencies and Configuration
+? Database Configuration
+? Entity Models
+? Repositories
+? Service Layer
+? Controller Layer
+? Security Implementation
+? Exception Handling
+? Data Transfer Objects (DTOs)
+? API Endpoints
+? Frontend Component Specifications
+? Frontend Service Configurations (Axios API)
+? Frontend Store Configurations (Redux Toolkit)
+? Demo User Interface
+? End of Documentation
+Project Overview
+SafeHarbor is a high-fidelity disaster response and emergency coordination platform designed to orchestrate systematic incident reporting, resource logistics, and personnel deployment natively. The system provides structural entry points for managing disaster scenarios, survival asset stockpiles, and personnel account assignments while rigorously encapsulating business logic for resource conflict validation, spatial coordinate sanity, and immutable audit logs securely
+The platform enforces role-based access control dynamically allocating distinct privileges for AGENCY_DIRECTOR, EMERGENCY_DISPATCHER, and FIELD_RESPONDER roles inherently. All interactions strictly utilize a stateless filter topology that executes the standard HS256 JWT algorithm implicitly signing tokens to prevent unauthorized record modifications and natively restricted administrative operations internally safely.
+
+
+
+
+Technology Stack
+- Framework: Spring Boot
+- Java Version: Java 17+
+- Build Tool: Maven
+- Frontend: React
+- Database: MySQL
+- ORM: Spring Data JPA
+- Security: Spring Security
+- Password Encoding: BCrypt
+
+Project Structure
+Backend:
+
+
+
+
+
+
+Frontend:
+
+
+Dependencies and Configuration
+- Spring Boot Starter Web
+- Spring Boot Starter Data JPA
+- Spring Boot Starter Security
+- MySQL Connector/J (MySQL Driver)
+- JWT Library (jjwt-api, jjwt-impl, jjwt-jackson)
+- Lombok
+- Spring Boot Starter Validation
+- Spring Boot Starter Test
+- React, React DOM
+- React Router DOM
+- Redux Toolkit (@reduxjs/toolkit)
+- React Redux
+- Axios
+- Swagger API
+- Testing Library (Jest DOM, React, User Event)
+
+Database Configuration
+URL: jdbc:mysql://localhost:3306/safeharbor_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+Driver: com.mysql.cj.jdbc.Driver
+Table Naming: personnel_accounts, disaster_incidents, supply_inventories, relief_shelters, resource_dispatches.
+Note: Requires active credentials injected into application.properties safely.
+
+Entity Models
+PersonnelAccount Entity (Table: personnel_accounts)
+Fields: id (Long, Primary Key), username (String), passwordHash (String), fullName (String), role (String), contactNumber (String), assignedRegion (String), isActive (boolean)
+Validation: username @Column(unique=true, nullable=false), passwordHash @Column(name="password_hash", nullable=false), fullName @Column(name="full_name", nullable=false), role @Column(nullable=false).
+Note: Role values are AGENCY_DIRECTOR, EMERGENCY_DISPATCHER, FIELD_RESPONDER. Default isActive=true.
+
+DisasterIncident Entity (Table: disaster_incidents)
+Fields: id (Long, Primary Key), title (String), description (String), incidentType (String), severityLevel (String), latitude (Double), longitude (Double), status (String), reportedAt (LocalDateTime), assignedResponder (ManyToOne -> PersonnelAccount)
+Validation: title @Column(nullable=false), description @Column(columnDefinition="TEXT", nullable=false), incidentType @Column(name="incident_type", nullable=false), severityLevel @Column(name="severity_level", nullable=false), latitude @Column(nullable=false), longitude @Column(nullable=false), status @Column(nullable=false).
+
+Note: Status values are REPORTED, ASSIGNED, RESOLVED, CANCELLED. reportedAt is set automatically on creation.
+
+SupplyInventory Entity (Table: supply_inventories)
+Fields: id (Long, Primary Key), itemName (String), category (String), availableQuantity (Integer), reservedQuantity (Integer), criticalThreshold (Integer), unit (String)
+Validation: itemName @Column(name="item_name", unique=true, nullable=false), category @Column(nullable=false), unit @Column(nullable=false).
+Note: Default availableQuantity=0, reservedQuantity=0, criticalThreshold=100.
+
+ReliefShelter Entity (Table: relief_shelters)
+Fields: id (Long, Primary Key), shelterName (String), locationAddress (String), capacity (Integer), currentOccupancy (Integer), managerName (String), isActive (boolean)
+Validation: shelterName @Column(name="shelter_name", nullable=false), locationAddress @Column(name="location_address", nullable=false), capacity @Column(nullable=false).
+Note: Default currentOccupancy=0, isActive=true.
+
+ResourceDispatch Entity (Table: resource_dispatches)
+Fields: id (Long, Primary Key), targetIncident (ManyToOne -> DisasterIncident), inventory (ManyToOne -> SupplyInventory), dispatchedQuantity (Integer), dispatchStatus (String), initiatedAt (LocalDateTime)
+Validation: targetIncident @JoinColumn(name="target_incident_id", nullable=false), inventory @JoinColumn(name="inventory_id", nullable=false), dispatchedQuantity @Column(name="dispatched_quantity", nullable=false), dispatchStatus @Column(name="dispatch_status", nullable=false).
+Note: DispatchStatus values are PENDING_APPROVAL, IN_TRANSIT, DELIVERED, CANCELLED.
+
+Repositories
+All repositories must be interfaces extending JpaRepository<Entity, Long>
+
+1.PersonnelAccountRepository
+Optional<PersonnelAccount> findByUsername(String username)
+List<PersonnelAccount> findByRoleAndIsActiveTrue(String role)
+2.DisasterIncidentRepository
+Page<DisasterIncident> findByStatusNot(String status, Pageable pageable)
+@Query List<DisasterIncident> findCriticalUnassigned() (Custom query to identify high-priority unassigned incidents)
+3.SupplyInventoryRepository
+Optional<SupplyInventory> findByItemName(String itemName)
+@Query List<SupplyInventory> findItemsBelowCriticalThreshold() (Custom query for automated shortage detection)
+4.ReliefShelterRepository
+List<ReliefShelter> findByIsActiveTrue()
+@Query List<ReliefShelter> findWithAvailableCapacity(int needed) (Validates available beds before intake)
+5.ResourceDispatchRepository
+List<ResourceDispatch> findByDispatchStatus(String dispatchStatus)
+List<ResourceDispatch> findByTargetIncidentId(Long incidentId)
+
+
+Service Layer
+Services manage business logic between entities and DTOs natively.
+1.AuthService
+AuthResponseDto registerPersonnel(PersonnelAccountRequestDto dto) (Checks username uniqueness, encodes password with BCrypt, persists PersonnelAccount with the specified role, generates and returns JWT token with username and role)
+AuthResponseDto authenticatePersonnel(AuthRequestDto dto) (Authenticates via AuthenticationManager, resolves PersonnelAccount, generates and returns JWT token with username and role)
+Page<PersonnelAccountResponseDto> getPaginatedAccounts(Pageable pageable) (Returns a paginated list of all personnel accounts - AGENCY_DIRECTOR only)
+Successful login must persist:
+? accessToken 
+? role 
+? username 
+? fullName
+into localStorage key 'user'.
+
+2.IncidentCoordinationService
+DisasterIncidentResponseDto reportNewIncident(DisasterIncidentRequestDto dto) (Enforces spatial numeric sanity bounds on latitude/longitude, sets initial status to REPORTED, persists and returns the incident record)
+DisasterIncidentResponseDto assignResponder(Long incidentId, Long personnelId) (Validates incident existence, resolves responder account, transitions status to ASSIGNED, binds responder to the incident within @Transactional boundary)
+void updateIncidentStatus(Long id, String status) (Validates lifecycle state transitions, updates status to RESOLVED or CANCELLED, persists changes)
+Page<DisasterIncidentResponseDto> getPaginatedIncidents(Pageable pageable) (Returns all incidents with pagination support)
+- Latitude must validate between -90 and 90.
+- Longitude must validate between -180 and 180.
+- Invalid coordinate submissions must throw BusinessValidationException.
+3.InventoryLogisticsService
+SupplyInventoryResponseDto addNewSupplyItem(SupplyInventoryRequestDto dto) (Checks for item name uniqueness, initializes stock levels, persists and returns the survival asset record)
+void updateInventory(Long id, Integer quantity) (Atomically updates availableQuantity, checks against criticalThreshold to trigger shortage alerts)
+List<SupplyInventoryResponseDto> getCriticalShortages() (Returns all assets where available stock is at or below the defined critical threshold)
+
+
+4.DispatchOrchestrationService
+ResourceDispatchResponseDto requestDispatch(ResourceDispatchRequestDto dto) (Resolves target incident and inventory item, validates that dispatchedQuantity does not exceed available stock, performs atomic reservation, transitions incident status to ASSIGNED within @Transactional boundary)
+ResourceDispatchResponseDto fulfillDispatch(Long id) (Resolves dispatch record, updates status to DELIVERED, finalizes stock reduction within @Transactional boundary)
+Page<ResourceDispatchResponseDto> getPaginatedDispatches(Pageable pageable) (Returns all dispatch orchestrations with pagination)
+5.ShelterManagementService
+ReliefShelterResponseDto registerShelter(ReliefShelterRequestDto dto) (Persists new shelter facility with capacity details and manager assignment)
+ReliefShelterResponseDto adjustOccupancy(Long id, int intakeCount) (Validates that new occupancy does not exceed facility capacity, updates currentOccupancy atomically)
+Page<ReliefShelterResponseDto> getPaginatedShelters(Pageable pageable) (Returns all shelters with real-time occupancy data)
+6.JwtService
+String generateToken(UserDetails userDetails) (Natively signs a JWT using the HS256 algorithm with the username and role as claims)
+boolean isTokenValid(String token, UserDetails userDetails) (Cryptographically validates the token signature and expiration against the authenticated user)
+String extractUsername(String token) (Parses the JWT subject to retrieve the account's username/email)
+
+Controller Layer
+Controllers manage incoming external requests inherently leveraging @RestController for JSON serialization.
+
+1.AuthController (/api/auth)
+POST /api/auth/register: (PUBLIC) 201 Created, returns ResponseEntity<PersonnelAccountResponseDto>.
+Success: Registers personnel account and returns response DTO.
+POST /api/auth/login: (PUBLIC) 200 OK, returns ResponseEntity<AuthResponseDto>.
+Success: Returns AuthResponseDto containing token (String), username (String), and role (String).
+Failure: 401 Unauthorized if credentials are invalid.
+GET /api/auth/personnel: (DIRECTOR) @PreAuthorize("hasAuthority('AGENCY_DIRECTOR')") 200 OK, returns ResponseEntity<Page<PersonnelAccountResponseDto>>.
+Success: Returns a paginated list of all personnel.
+
+2.IncidentController (/api/incidents)
+POST /api/incidents: (DIRECTOR/DISPATCHER) @PreAuthorize("hasAnyAuthority('AGENCY_DIRECTOR', 'EMERGENCY_DISPATCHER')") 201 Created, returns ResponseEntity<DisasterIncidentResponseDto>.
+Success: Logs a new incident and returns the saved record.
+GET /api/incidents: (AUTHENTICATED) 200 OK, returns ResponseEntity<Page<DisasterIncidentResponseDto>>.
+Success: Returns all incidents (paginated).
+PATCH /api/incidents/{id}/status: (AUTHENTICATED) 200 OK, returns ResponseEntity<Void>.
+Accepts @RequestParam String status.
+Success: Transitions incident lifecycle state (e.g., to RESOLVED).
+
+3.InventoryController (/api/inventory)
+POST /api/inventory: (DIRECTOR/DISPATCHER) @PreAuthorize("hasAnyAuthority('AGENCY_DIRECTOR', 'EMERGENCY_DISPATCHER')") 201 Created, returns ResponseEntity<SupplyInventoryResponseDto>.
+Success: Adds a new survival asset to the stockpile.
+GET /api/inventory: (AUTHENTICATED) 200 OK, returns ResponseEntity<Page<SupplyInventoryResponseDto>>.
+Success: Returns all inventory items (paginated).
+GET /api/inventory/shortages: (AUTHENTICATED) 200 OK, returns ResponseEntity<List<SupplyInventoryResponseDto>>.
+Success: Returns all items currently below critical thresholds.
+4.ShelterController (/api/shelters)
+POST /api/shelters: (DIRECTOR/DISPATCHER) @PreAuthorize("hasAnyAuthority('AGENCY_DIRECTOR', 'EMERGENCY_DISPATCHER')") 201 Created, returns ResponseEntity<ReliefShelterResponseDto>.
+Success: Sets up a new relief shelter facility.
+GET /api/shelters: (AUTHENTICATED) 200 OK, returns ResponseEntity<Page<ReliefShelterResponseDto>>.
+Success: Returns all shelters with real-time occupancy data.
+PATCH /api/shelters/{id}/occupancy: (DIRECTOR/DISPATCHER) 200 OK, returns ResponseEntity<ReliefShelterResponseDto>.
+Accepts @RequestParam int intakeCount.
+Success: Adjusts the current occupancy count of the shelter.
+
+5.DispatchController (/api/dispatches)
+POST /api/dispatches/request: (DISPATCHER/DIRECTOR) @PreAuthorize("hasAnyAuthority('AGENCY_DIRECTOR', 'EMERGENCY_DISPATCHER')") 201 Created, returns ResponseEntity<ResourceDispatchResponseDto>.
+Success: Initiates a resource movement and returns the dispatch orchestration record.
+POST /api/dispatches/{id}/fulfill: (DIRECTOR/COORDINATOR) @PreAuthorize("hasAnyAuthority('AGENCY_DIRECTOR', 'LOGISTICS_COORDINATOR')") 200 OK, returns ResponseEntity<ResourceDispatchResponseDto>.
+Success: Marks a dispatch as delivered and finalizes stock deductions.
+
+Security Implementation
+JWT signing algorithm: HS256
+Security utility class name: JwtService (located in com.example.demo.security.JwtService)
+Exact method names in JwtService.java: generateToken (accepts UserDetails parameter, returns String), isTokenValid (accepts String token and UserDetails userDetails parameters, returns boolean), extractUsername (accepts String token, parses JWT subject and returns username String)
+JwtService secretKey field must be declared private (injected via @Value("${safeharbor.jwt.secret}")).
+SecurityConfig.java: Annotated with @Configuration, @EnableWebSecurity, and @EnableMethodSecurity.
+Bean Declarations: Must declare a @Bean method named passwordEncoder returning BCryptPasswordEncoder and a @Bean method named securityFilterChain returning SecurityFilterChain.
+CORS Policy: Must declare a @Bean method named corsConfigurationSource containing CORS configuration. Must allow origins http://localhost:3000 and http://localhost:5173. Allowed methods: GET, POST, PUT, PATCH, DELETE, OPTIONS. Allowed headers: Authorization, Content-Type, X-Requested-With, Accept.
+Path Authorization:
+/api/auth/** ? permitAll() (PUBLIC)
+/api/** ? authenticated() (JWT required, method-level @PreAuthorize handles role enforcement)
+Session Management: Explicitly configured as STATELESS (SessionCreationPolicy.STATELESS).
+JwtAuthenticationFilter extends OncePerRequestFilter and is added before UsernamePasswordAuthenticationFilter.
+
+Exception Handling
+Required Package: com.example.demo.exception The central handler class is GlobalExceptionHandler. It must be annotated with @RestControllerAdvice. All error responses use a Map<String, Object> body containing keys timestamp, status, and message.
+ResourceNotFoundException: Thrown when a PersonnelAccount or DisasterIncident cannot be found by ID or username. The @ExceptionHandler method must return ResponseEntity with HTTP 404 NOT_FOUND and a Map body containing the error message.
+BusinessValidationException: Thrown when operational constraints are violated (e.g., inventory shortage or invalid coordinate bounds). The @ExceptionHandler method must return ResponseEntity with HTTP 400 BAD_REQUEST and a Map body containing the error message.
+RuntimeException (generic): Catches all unhandled runtime errors including auth failures and internal orchestration exceptions. The @ExceptionHandler method must return ResponseEntity with HTTP 500 INTERNAL_SERVER_ERROR and a Map body containing key message set to the exception details.
+
+
+
+Data Transfer Objects (DTOs)
+AuthRequestDto
+Fields: username (String), password (String)
+AuthResponseDto
+Fields: accessToken (String), refreshToken (String), username (String), role (String), fullName (String)
+PersonnelAccountRequestDto
+Fields: username (String), password (String), fullName (String), role (String), contactNumber (String), assignedRegion (String)
+PersonnelAccountResponseDto
+Fields: id (Long), username (String), fullName (String), role (String), contactNumber (String), assignedRegion (String), isActive (boolean)
+DisasterIncidentRequestDto
+Fields: title (String), description (String), incidentType (String), severityLevel (String), latitude (Double), longitude (Double)
+DisasterIncidentResponseDto
+Fields: id (Long), title (String), description (String), incidentType (String), severityLevel (String), latitude (Double), longitude (Double), status (String), reportedAt (LocalDateTime), assignedResponderUsername (String)
+SupplyInventoryRequestDto
+Fields: itemName (String), category (String), availableQuantity (Integer), criticalThreshold (Integer), unit (String)
+SupplyInventoryResponseDto
+Fields: id (Long), itemName (String), category (String), availableQuantity (Integer), reservedQuantity (Integer), criticalThreshold (Integer), unit (String)
+ResourceDispatchRequestDto
+Fields: targetIncidentId (Long), inventoryItemId (Long), dispatchedQuantity (Integer)
+Note: The dispatch endpoint's request parameter must carry both @Valid and @RequestBody annotations. @Valid triggers bean validation on the incoming logistics payload.
+
+ResourceDispatchResponseDto
+Fields: id (Long), incidentTitle (String), itemName (String), dispatchedQuantity (Integer), dispatchStatus (String), initiatedAt (LocalDateTime)
+
+Note: The book endpoint's second parameter must carry both @Valid and @RequestBody annotations. @Valid triggers bean validation on the incoming payload.
+
+REST API Endpoints
+Method	Endpoint	Description
+POST	/api/auth/register	Register personnel account. Returns PersonnelAccountResponseDto. (HTTP 201)
+POST	/api/auth/login	Authenticate user. Returns AuthResponseDto with JWT token and role details.
+GET	/api/auth/personnel	Retrieve all personnel accounts (AGENCY_DIRECTOR only). Returns Page<PersonnelAccountResponseDto>.
+PUT	/api/auth/personnel/{id}	Update personnel account details (AGENCY_DIRECTOR only).
+DELETE	/api/auth/personnel/{id}	Remove a personnel account (AGENCY_DIRECTOR only). Returns 204 No Content.
+POST	/api/incidents	Log a new disaster incident (AGENCY_DIRECTOR, EMERGENCY_DISPATCHER). Returns 201 Created.
+GET	/api/incidents	Retrieve all incidents with pagination support.
+GET	/api/incidents/{id}	Retrieve specific incident details by unique ID.
+PUT	/api/incidents/{id}	Update existing incident data.
+DELETE	/api/incidents/{id}	Remove an incident record. Returns 204 No Content.
+PATCH	/api/incidents/{id}/status	Update incident lifecycle status (REPORTED, ASSIGNED, RESOLVED, CANCELLED).
+GET	/api/inventory	Retrieve all survival assets in the stockpile (paginated).
+POST	/api/inventory	Add a new resource asset to the inventory. Returns 201 Created.
+PUT	/api/inventory/{id}	Update stock levels or metadata for an inventory item.
+DELETE	/api/inventory/{id}	Remove an asset from the stockpile.
+GET	/api/inventory/shortages	Retrieve all assets currently below their critical quantity threshold.
+POST	/api/shelters	Set up a new relief shelter facility. Returns 201 Created.
+GET	/api/shelters	Retrieve all relief shelters with capacity and occupancy details.
+PUT	/api/shelters/{id}	Update shelter facility details (address, capacity, manager).
+DELETE	/api/shelters/{id}	Remove a shelter facility from the system.
+PATCH	/api/shelters/{id}/occupancy	Adjust real-time occupancy (intake count) for a shelter.
+POST	/api/dispatches/request	Initiate a resource dispatch request for an incident. Returns 201 Created.
+POST	/api/dispatches/{id}/fulfill	Transition a dispatch to fulfillment/delivery state (AGENCY_DIRECTOR, LOGISTICS_COORDINATOR).
+GET	/api/dispatches	Retrieve all active and historic resource dispatches (paginated).
+PUT	/api/dispatches/{id}	Update dispatch request metadata or quantities.
+DELETE	/api/dispatches/{id}	Cancel or remove a dispatch orchestration.
+
+Frontend Component Specifications
+Frontend Component Specifications
+1.components/Login.jsx
+Purpose: Authentication entry point managing credential submission and JWT user storage.
+Implementation Requirements:
+Label "Personnel Email *" must be associated via htmlFor="email" and input must bind HTML input type "email" (accessible via getByLabelText(/Personnel Email \*/i)).
+Label "Secured Password *" must be associated via htmlFor="password" and input must bind HTML input type "password" (accessible via getByLabelText(/Secured Password \*/i)).
+Submit button label must be exactly "Authenticate" (renders "Authenticating..." while isLoading is true).
+On submit: dispatches the Redux login action with {email, password}.
+On isError in auth state: immediately calls alert(message) to display the error.
+- Error display: When isError is true in auth state, immediately calls alert(message) to display the error message.
+- The error message must come from the backend response (e.g., "Invalid credentials", "User not found").
+- No other error display mechanism (like inline error div) should be used for login errors.
+On isSuccess or user present: navigates to '/'.
+Email input placeholder must support:
+"Enter designated personnel email" 
+Password input placeholder must support:
+"Enter secured password credentials"
+2.components/Register.jsx
+Purpose: Personnel self-registration interface managing role-based account creation.
+Implementation Requirements:
+Label "Email *" with input type "email", placeholder "operative@safeharbor.org", and required attribute.
+Label "Password *" with input type "password", placeholder "Choose a password", and required attribute.
+Label "Full Name *" with input type "text", placeholder "Jane Smith", and required attribute.
+Label "Assigned Role *" with a <select> dropdown containing roles AGENCY_DIRECTOR, EMERGENCY_DISPATCHER, FIELD_RESPONDER.
+Label "Emergency Contact *" with input type "text", placeholder "1234567890", and required attribute.
+Submit button role is "button" with accessible name "Register Account" (renders "Registering..." while isLoading is true).
+On submit: dispatches the Redux register action with {email, password, fullName, role, emergencyContact}.
+- On successful registration (isSuccess becomes true), automatically navigate to '/login' page.
+- The navigation must happen using useNavigate hook from react-router-dom.
+- After navigation, the registration form should be cleared and user can login with newly created credentials.
+
+3.components/layout/Navbar.jsx
+Purpose: Role-aware navigation bar with conditional link visibility and logout capability.
+Implementation Requirements:
+Renders a semantic HTML <nav> element with className "navbar" (accessible via getByRole('navigation')).
+When user is null: renders "Login" and "Register" links.
+When user.role is 'AGENCY_DIRECTOR': renders "Personnel", "All Incidents", "Inventory", and "Global Stats".
+When user.role is 'EMERGENCY_DISPATCHER': renders "Active Incidents", "Dispatch", and "Shelters".
+When user.role is 'FIELD_RESPONDER': renders "My Assignments" and "Task Map".
+"SafeHarbor" brand text must be wrapped in a Link with href="/".
+Logout button label is "Logout". Clicking it dispatches logout and reset, then navigates to '/'.
+4.components/incident/DisasterIncidentForm.jsx
+Purpose: Modal form for logging a new disaster incident.
+Implementation Requirements:
+Heading renders "Log Disaster Incident" (accessible via getByText(/Log Disaster Incident/i)).
+Label "Incident Title *" associated via htmlFor="title".
+Label "Incident Type *" associated via htmlFor="type" with a <select> dropdown (FLOOD, EARTHQUAKE, WILDFIRE, CYCLONE).
+Label "Risk Severity Parameter *" associated via htmlFor="severity".
+Label "Latitude *" and "Longitude *" inputs with type "number".
+Label "Scenario Description *" with a <textarea> and placeholder "Provide complete scenario...".
+Close button renders "×" text. Clicking it calls onClose.
+Submit button label is "Commit Incident".
+On isSuccess: calls alert('Incident logged successfully!'), dispatches reset(), and calls onClose().
+HTTP 500 responses must display a domain-specific failure alert/message. 
+HTTP 409 conflict responses must display backend validation/conflict message dynamically. 
+Success alerts/messages must auto-dismiss after timeout lifecycle completion.
+Title placeholder example: "Sector 7 Flood" 
+Incident type placeholder example: "Hydrological Inundation" 
+Latitude placeholder example: "34.0522" 
+Longitude placeholder example: "-118.2437" 
+Description placeholder: "Provide complete scenario..."
+
+Each incident row must render: 
+Edit button with title "Edit Incident" 
+Delete button with title "Delete Incident" 
+Delete action must call window.confirm() before deletion. 
+Edit action must open DisasterIncidentForm populated with selected incident data. 
+Delete success must display backend response message in the UI.
+
+5.components/incident/DisasterIncidentList.jsx
+Purpose: Tabular display of incidents with filtering and management capability.
+Implementation Requirements:
+Renders heading "Emergency Incident Dashboard".
+On mount: dispatches getAllIncidents().
+Displays each incident's title, type, and status in a table.
+When items array is empty: renders empty state message "No active incidents reported.".
+Includes SearchFilterBar with status options 'REPORTED', 'ASSIGNED', 'RESOLVED', 'CANCELLED'.
+On initial mount: 
+? component must automatically fetch incidents from backend. 
+Changing filter status must trigger automatic refetch.
+6.components/inventory/SupplyInventoryList.jsx
+Purpose: Displays survival asset stockpile with shortage highlighting.
+Implementation Requirements:
+On mount: dispatches getInventory().
+Displays assets in a grid/table. Items with quantity below criticalThreshold must render a "Low Stock" alert or badge.
+When items array is empty: renders EmptyState with message "Survival assets stockpile is currently empty.".
+7.components/dispatch/ResourceDispatchForm.jsx
+Purpose: Modal form for orchestrating resource movement to an incident.
+Implementation Requirements:
+Heading renders "Initiate Resource Dispatch".
+Label "Select Target Incident *" dropdown.
+Label "Select Inventory Item *" dropdown.
+Label "Dispatched Quantity *" number input.
+Submit button label is "Execute Dispatch".
+Validates dispatchedQuantity <= availableQuantity before submission.
+8.components/ErrorHandler.jsx
+Purpose: Global exception boundary isolating runtime failures natively.
+Implementation Requirements:
+Accepts an error prop (String).
+Renders the error text inside an element with className "error-message".
+Root container must expose class: "global-error-stack"
+Error text must render inside: "error-message" element.
+9.components/NotificationStack.jsx
+Purpose: Renders system-wide notification alerts across the dashboard.
+Implementation Requirements:
+Accepts notifications (Array) and removeNotification (Function) props.
+Renders dismiss button "×" for each notification.
+Notifications support:
+? success,
+? warning,
+? error states.
+Notifications may auto-dismiss after timeout.
+Manual dismiss via "×" button removes notification from UI state.
+
+10.components/common/EmptyState.jsx
+Purpose: Reusable empty state component rendered when list data is absent.
+Implementation Requirements:
+Renders the message text discoverably in the DOM (e.g., "No active incidents reported.").
+11.components/dashboard/StatCards.jsx
+Purpose: Dashboard KPI summary cards.
+Implementation Requirements:
+Stats displayed include: Active Incidents, Pending Dispatches, Available Shelters, Critical Shortages.
+components/personnel/PersonnelAccountList.jsx
+Purpose: Admin interface for viewing and managing personnel accounts.
+Implementation Requirements:
+On mount: dispatches getPersonnel().
+Renders heading "Personnel Directory".
+Each row renders a "Deactivate" button. Clicking it calls window.confirm before updating isActive to false.
+12.components/shelter/ReliefShelterList.jsx
+Purpose: Displays relief shelters with real-time occupancy monitoring.
+Implementation Requirements:
+On mount: dispatches getShelters().
+Renders heading "Relief Facility Overview".
+Displays CapacityBar for each shelter to visualize occupancy.
+When items array is empty: renders "No relief shelters registered.".
+13.components/shelter/ReliefShelterForm.jsx
+Purpose: Modal form for registering new relief facilities.
+Implementation Requirements:
+Heading renders "Register Relief Shelter".
+Label "Shelter Name *" and "Maximum Capacity *".
+On success: refreshes shelter list and closes modal.
+
+14.components/common/SearchFilterBar.jsx
+Purpose: Reusable search and filter toolbar for list views.
+Implementation Requirements:
+Accepts placeholder, filterOptions, onSearch, and onFilter props.
+Renders a text input for search and a <select> for status filtering.
+Changing filter dropdown value must invoke onFilter(value) callback immediately. 
+
+15.components/dashboard/DomainChart.jsx
+Purpose: Bar chart component for visualizing incident distribution by type.
+Implementation Requirements:
+Renders each data item as a bar whose height is proportional to its value.
+Uses CSS transitions for smooth height adjustments.
+16.components/dashboard/RecentActivity.jsx
+Purpose: Activity feed displaying the most recent system events.
+Implementation Requirements:
+Accepts activities (Array of {title, date}) prop.
+Renders each activity as a list item with activity-text and activity-date spans.
+17.components/inventory/SupplyInventoryForm.jsx
+Purpose: Modal form for adding or updating survival assets.
+Implementation Requirements:
+Heading renders "Manage Survival Asset".
+Label "Item Name *" and "Initial Quantity *".
+Validates that criticalThreshold is a positive integer.
+18.components/dispatch/ResourceDispatchList.jsx
+Purpose: Monitor active and completed resource dispatches.
+Implementation Requirements:
+On mount: dispatches getDispatches().
+Renders heading "Resource Logistics Monitor".
+Each row renders a "Fulfill" button for IN_TRANSIT dispatches.
+19.components/personnel/PersonnelAccountForm.jsx
+Purpose: Modal form for registering or updating personnel account profiles.
+Implementation Requirements:
+Heading renders "Manage Personnel Account".
+Label "Username *", "Full Name *", and "Assigned Role *".
+Validates contact number format before submission.
+20.components/common/Pagination.jsx
+Purpose: Reusable pagination control for navigating large data sets.
+Implementation Requirements:
+Accepts currentPage, totalPages, and onPageChange props.
+Renders "Previous" and "Next" buttons. "Previous" is disabled on page 0.
+21.src/App.js (Root Operations Terminal)
+Purpose: Orchestrates global application state, role-based view rendering, and persistent notification stacking.
+Implementation Requirements:
+Manages activeTab state to toggle between 'home', 'incidents', 'shelters', 'inventory', 'dispatches', and 'personnel'.
+Conditionally renders Login or Register if no token is present.
+Implements addNotification and dismissNotification logic shared via NotificationStack.
+Renders Navbar and ErrorHandler as persistent top-level layout elements.
+
+
+
+
+Frontend Service Configurations (Axios API)
+1.services/api.js
+Purpose: Configuration provider isolating Axios instance parameters natively.
+Implementation Requirements:
+baseURL set to http://localhost:8080/api with Content-Type header "application/json".
+Request Interceptor: Reads user object from localStorage.getItem('user'), parses JSON, and injects Authorization: Bearer {user.accessToken} header if token is present.
+Response Interceptor: On 401 Unauthorized response, removes 'user' from localStorage and redirects window.location.href to '/login'.
+2.services/authService.js
+Purpose: Manages authentication lifecycle and localStorage persistence.
+Implementation Requirements:
+Exposes registerPersonnel(userData) - POST to /auth/register; on success persists response data to localStorage.setItem('user', JSON.stringify(response.data)).
+Exposes login(userData) - POST to /auth/login; on success persists response data to localStorage.setItem('user', JSON.stringify(response.data)).
+Exposes logout() - Removes 'user' from localStorage.
+Service module must export:
+? login 
+? logout
+as callable functions.
+Persisted authentication object must use localStorage key: 'safeharbor_user' 
+JWT token persistence key: 'safeharbor_jwt_token'
+
+3.services/incidentService.js
+Purpose: Directly mediates Axios promise components mapping against disaster incident endpoints.
+Implementation Requirements:
+Exposes reportIncident(data) - POST to /incidents.
+Exposes getIncidents(params) - GET to /incidents with pagination parameters.
+Exposes updateIncidentStatus(id, status) - PATCH to /incidents/{id}/status with status as a query parameter.
+Exposes deleteIncident(id) - DELETE to /incidents/{id}.
+Exposes updateIncident(id, data) - PUT to /incidents/{id}.
+DELETE success response must support displaying backend message:
+"DisasterIncident deleted successfully."
+UPDATE success response must support displaying backend message:
+"DisasterIncident updated successfully."
+4.services/inventoryService.js
+Purpose: Mediates Axios components for survival asset stockpile management.
+Implementation Requirements:
+Exposes getInventory(params) - GET to /inventory.
+Exposes addInventoryItem(data) - POST to /inventory.
+Exposes updateInventoryStock(id, quantity) - PATCH to /inventory/{id}/stock with quantity parameter.
+5.services/dispatchService.js
+Purpose: Mediates Axios components for resource movement orchestration.
+Implementation Requirements:
+Exposes requestDispatch(data) - POST to /dispatches/request.
+Exposes getDispatches(params) - GET to /dispatches.
+Exposes fulfillDispatch(id) - POST to /dispatches/{id}/fulfill.
+6.services/shelterService.js
+Purpose: Mediates Axios components for relief facility monitoring.
+Implementation Requirements:
+Exposes getShelters(params) - GET to /shelters.
+Exposes registerShelter(data) - POST to /shelters.
+Exposes adjustShelterOccupancy(id, intakeCount) - PATCH to /shelters/{id}/occupancy with intakeCount query parameter.
+7.services/personnelService.js
+Purpose: Admin interface for personnel directory operations.
+Implementation Requirements:
+Exposes getAllPersonnel(params) - GET to /auth/personnel.
+Exposes deactivatePersonnel(id) - DELETE to /auth/personnel/{id}.
+
+
+
+
+
+
+Frontend Store Configurations (Redux Toolkit)
+store/index.js
+Purpose: Root orchestrator managing global state slices inherently.
+Implementation Requirements:
+Exports a named store export (export const store) configured via configureStore.
+The store must expose an 'auth' slice at state.auth.
+The store must expose an 'incidents' slice at state.incidents.
+The store must expose an 'inventory' slice at state.inventory.
+The store must expose a 'dispatches' slice at state.dispatches.
+The store must expose a 'shelters' slice at state.shelters.
+The store must expose a 'personnel' slice at state.personnel.
+Store must expose:
+? getState() 
+? dispatch() 
+? standard Redux Toolkit store methods.
+
+store/slices/authSlice.js
+Purpose: Maintains authentication session state securely.
+Implementation Requirements:
+- Initial State: { user: null, token: null, loading: false, error: null }. Initializes user and token from localStorage if present.
+- Action clearAuthError: Resets error to null.
+- Action logout: Removes 'safeharbor_user' and 'safeharbor_jwt_token' from localStorage, sets user: null, token: null, loading: false, error: null in Redux state.
+- Async Action login (type prefix 'auth/login'): pending sets loading=true; fulfilled sets loading=false, token=payload.accessToken, user=payload (containing username, role, fullName); rejected sets loading=false, error=payload.
+- After successful login, the auth state must have token and user populated with the response data from backend.
+- logout action must reset the entire auth state to initial values (user: null, token: null, loading: false, error: null).
+store/slices/incidentSlice.js
+Purpose: Manages disaster incident records and UI filter state.
+Implementation Requirements:
+Initial State: { items: [], loading: false, error: null, currentIncident: null, filterStatus: 'ALL' }.
+Action selectIncident: Sets currentIncident to payload.
+Action setFilterStatus: Sets filterStatus to payload.
+Async Action fetchIncidents (type prefix 'incidents/fetchAll'): pending sets loading=true; fulfilled sets loading=false, items=payload.
+Async Action reportIncident: fulfilled pushes the new incident into the items array.
+store/slices/inventorySlice.js
+Purpose: Manages survival asset stockpile records.
+Implementation Requirements:
+Initial State: { items: [], loading: false, error: null, shortages: [] }.
+Async Action fetchInventory: fulfilled sets items=payload and filters shortages based on criticalThreshold.
+Async Action updateStock: fulfilled updates the quantity of the specific item in the items array.
+store/slices/dispatchSlice.js
+Purpose: Manages resource dispatch orchestration records.
+Implementation Requirements:
+Initial State: { items: [], loading: false, error: null }.
+Async Action fetchDispatches: fulfilled sets items=payload.
+Async Action requestDispatch: fulfilled adds the new dispatch record to items.
+store/slices/shelterSlice.js
+Purpose: Manages relief shelter records and occupancy state.
+Implementation Requirements:
+Initial State: { items: [], loading: false, error: null }.
+Async Action fetchShelters: fulfilled sets items=payload.
+Async Action updateOccupancy: fulfilled updates the currentOccupancy for the specific shelter in the items array.
+store/slices/personnelSlice.js
+Purpose: Manages personnel directory records for administrative views.
+Implementation Requirements:
+Initial State: { items: [], loading: false, error: null }.
+Async Action fetchPersonnel: fulfilled sets items=payload.
+Async Action deactivatePersonnel: fulfilled updates the isActive flag for the specific account in the items array.
+
+Demo User Interface
+
+
+
+
+
+
+
+
+
+
+
