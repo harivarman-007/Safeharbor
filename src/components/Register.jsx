@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { register, clearAuthError, resetRegisterSuccess } from '../store/slices/authSlice';
 
-const Register = ({ setView }) => {
+const Register = ({ setView, onAddNotification }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -24,20 +24,27 @@ const Register = ({ setView }) => {
       setEmergencyContact('');
       setAssignedRegion('');
       dispatch(resetRegisterSuccess());
+      if (onAddNotification) {
+        onAddNotification('Registration completed. Please sign in.', 'success');
+      }
       if (setView) {
         setView('login');
       } else {
         navigate('/login');
       }
     }
-  }, [isSuccess, navigate, setView, dispatch]);
+  }, [isSuccess, navigate, setView, dispatch, onAddNotification]);
 
   useEffect(() => {
     if (error) {
-      alert(error);
+      if (onAddNotification) {
+        onAddNotification(error, 'error');
+      } else {
+        alert(error);
+      }
       dispatch(clearAuthError());
     }
-  }, [error, dispatch]);
+  }, [error, dispatch, onAddNotification]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -86,7 +93,7 @@ const Register = ({ setView }) => {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Choose a password"
             />
           </div>
 

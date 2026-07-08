@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 
 import Navbar from './components/layout/Navbar';
 import Login from './components/Login';
@@ -23,6 +23,17 @@ import { fetchInventory } from './store/slices/inventorySlice';
 import { fetchDispatches } from './store/slices/dispatchSlice';
 import { fetchShelters } from './store/slices/shelterSlice';
 
+const getActiveTabFromPath = (pathname) => {
+  if (pathname.startsWith('/incidents')) return 'incidents';
+  if (pathname.startsWith('/inventory')) return 'inventory';
+  if (pathname.startsWith('/dispatches')) return 'dispatches';
+  if (pathname.startsWith('/shelters')) return 'shelters';
+  if (pathname.startsWith('/personnel')) return 'personnel';
+  if (pathname.startsWith('/register')) return 'register';
+  if (pathname.startsWith('/login')) return 'login';
+  return 'home';
+};
+
 const App = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -44,7 +55,7 @@ const App = () => {
   const personnelError = useSelector((state) => state.personnel.error);
   const globalError = authError || incidentError || inventoryError || dispatchError || shelterError || personnelError;
 
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(getActiveTabFromPath(location.pathname));
   const [notifications, setNotifications] = useState([]);
 
   // Toast alert manager
@@ -81,22 +92,13 @@ const App = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab === 'login') {
-      navigate('/login');
-    } else if (tab === 'register') {
-      navigate('/register');
-    } else {
-      navigate('/');
-    }
+    const path = tab === 'home' ? '/' : `/${tab}`;
+    navigate(path);
   };
 
   // Synchronize view tab state if route changes directly
   useEffect(() => {
-    if (location.pathname === '/login') {
-      setActiveTab('login');
-    } else if (location.pathname === '/register') {
-      setActiveTab('register');
-    }
+    setActiveTab(getActiveTabFromPath(location.pathname));
   }, [location.pathname]);
 
   // Calculations for dashboard
@@ -143,66 +145,108 @@ const App = () => {
         <Routes>
           <Route
             path="/login"
-            element={<Login setView={(v) => handleTabChange(v)} />}
+            element={
+              <Login
+                setView={(v) => handleTabChange(v)}
+                onAddNotification={addNotification}
+              />
+            }
           />
           <Route
             path="/register"
-            element={<Register setView={(v) => handleTabChange(v)} />}
+            element={
+              <Register
+                setView={(v) => handleTabChange(v)}
+                onAddNotification={addNotification}
+              />
+            }
           />
           <Route
             path="/"
             element={
               token ? (
-                <>
-                  {activeTab === 'home' && (
-                    <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
-                      <div className="dashboard-header">
-                        <div>
-                          <h1>Operations Command Center</h1>
-                          <p>SafeHarbor Disaster Response Coordination Platform</p>
-                        </div>
-                      </div>
-
-                      <StatCards
-                        activeIncidents={activeIncidentsCount}
-                        pendingDispatches={pendingDispatchesCount}
-                        availableShelters={availableSheltersCount}
-                        criticalShortages={shortagesCount}
-                      />
-
-                      <div className="dashboard-details-grid" style={{ marginTop: '2rem' }}>
-                        <div className="glass-panel">
-                          <DomainChart data={chartData} />
-                        </div>
-                        <div className="glass-panel">
-                          <RecentActivity activities={recentActivities} />
-                        </div>
-                      </div>
+                <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                  <div className="dashboard-header">
+                    <div>
+                      <h1>Operations Command Center</h1>
+                      <p>SafeHarbor Disaster Response Coordination Platform</p>
                     </div>
-                  )}
+                  </div>
 
-                  {activeTab === 'incidents' && (
-                    <DisasterIncidentList onAddNotification={addNotification} />
-                  )}
+                  <StatCards
+                    activeIncidents={activeIncidentsCount}
+                    pendingDispatches={pendingDispatchesCount}
+                    availableShelters={availableSheltersCount}
+                    criticalShortages={shortagesCount}
+                  />
 
-                  {activeTab === 'inventory' && (
-                    <SupplyInventoryList onAddNotification={addNotification} />
-                  )}
-
-                  {activeTab === 'dispatches' && (
-                    <ResourceDispatchList onAddNotification={addNotification} />
-                  )}
-
-                  {activeTab === 'shelters' && (
-                    <ReliefShelterList onAddNotification={addNotification} />
-                  )}
-
-                  {activeTab === 'personnel' && (
-                    <PersonnelAccountList onAddNotification={addNotification} />
-                  )}
-                </>
-              ) : null
+                  <div className="dashboard-details-grid" style={{ marginTop: '2rem' }}>
+                    <div className="glass-panel">
+                      <DomainChart data={chartData} />
+                    </div>
+                    <div className="glass-panel">
+                      <RecentActivity activities={recentActivities} />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Navigate to="/login" replace />
+              )
             }
+          />
+          <Route
+            path="/incidents"
+            element={
+              token ? (
+                <DisasterIncidentList onAddNotification={addNotification} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              token ? (
+                <SupplyInventoryList onAddNotification={addNotification} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/dispatches"
+            element={
+              token ? (
+                <ResourceDispatchList onAddNotification={addNotification} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/shelters"
+            element={
+              token ? (
+                <ReliefShelterList onAddNotification={addNotification} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/personnel"
+            element={
+              token ? (
+                <PersonnelAccountList onAddNotification={addNotification} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="*"
+            element={<Navigate to={token ? '/' : '/login'} replace />}
           />
         </Routes>
       </main>

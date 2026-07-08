@@ -54,7 +54,6 @@ const ReliefShelterForm = ({ onClose, onAddNotification }) => {
               type="text"
               required
               value={shelterName}
-              onChange={(e) => setItemName(e.target.value) /* Wait, let's make sure it calls setShelterName! */}
               onChange={(e) => setShelterName(e.target.value)}
               placeholder="e.g. Haven High Gymnasium"
             />

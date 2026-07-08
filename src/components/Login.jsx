@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login, clearAuthError } from '../store/slices/authSlice';
 
-const Login = ({ setView }) => {
+const Login = ({ setView, onAddNotification }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -19,10 +19,14 @@ const Login = ({ setView }) => {
 
   useEffect(() => {
     if (error) {
-      alert(error);
+      if (onAddNotification) {
+        onAddNotification(error, 'error');
+      } else {
+        alert(error);
+      }
       dispatch(clearAuthError());
     }
-  }, [error, dispatch]);
+  }, [error, dispatch, onAddNotification]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

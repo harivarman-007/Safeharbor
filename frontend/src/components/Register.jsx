@@ -86,7 +86,7 @@ const Register = ({ setView }) => {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="Choose a password"
             />
           </div>
 

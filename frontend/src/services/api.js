@@ -9,22 +9,22 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const userStr = localStorage.getItem('user') || localStorage.getItem('safeharbor_user');
-    if (userStr) {
-      try {
-        const user = JSON.parse(userStr);
-        if (user && user.accessToken) {
-          config.headers['Authorization'] = `Bearer ${user.accessToken}`;
+      const userStr = localStorage.getItem('safeharbor_user');
+      if (userStr) {
+        try {
+          const user = JSON.parse(userStr);
+          if (user && user.accessToken) {
+            config.headers['Authorization'] = `Bearer ${user.accessToken}`;
+          }
+        } catch (e) {
+          console.error('Error parsing user from localStorage', e);
         }
-      } catch (e) {
-        console.error('Error parsing user from localStorage', e);
+      } else {
+        const token = localStorage.getItem('safeharbor_jwt_token');
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`;
+        }
       }
-    } else {
-      const token = localStorage.getItem('safeharbor_jwt_token');
-      if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
     return config;
   },
   (error) => {
@@ -36,7 +36,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      localStorage.removeItem('user');
       localStorage.removeItem('safeharbor_user');
       localStorage.removeItem('safeharbor_jwt_token');
       window.location.href = '/login';
