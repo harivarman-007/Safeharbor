@@ -53,5 +53,29 @@ public class DataSeeder implements CommandLineRunner {
             personnelAccountRepository.save(dispatcher);
             log.info("[DataSeeder] Default dispatcher account created.");
         }
+
+        if (personnelAccountRepository.findByUsername("admin@safeharbor.org").isEmpty()) {
+            personnelAccountRepository.save(PersonnelAccount.builder()
+                    .username("admin@safeharbor.org")
+                    .passwordHash(passwordEncoder.encode("admin123"))
+                    .fullName("Agency Director")
+                    .role("AGENCY_DIRECTOR")
+                    .contactNumber("+1234567890")
+                    .assignedRegion("HQ")
+                    .isActive(true)
+                    .build());
+        }
+
+        if (personnelAccountRepository.findByUsername("dispatcher@safeharbor.org").isEmpty()) {
+            personnelAccountRepository.save(PersonnelAccount.builder()
+                    .username("dispatcher@safeharbor.org")
+                    .passwordHash(passwordEncoder.encode("dispatch123"))
+                    .fullName("Emergency Dispatcher")
+                    .role("EMERGENCY_DISPATCHER")
+                    .contactNumber("+0987654321")
+                    .assignedRegion("Region-1")
+                    .isActive(true)
+                    .build());
+        }
     }
 }
