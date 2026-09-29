@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class InventoryController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('AGENCY_DIRECTOR','EMERGENCY_DISPATCHER')")
     public ResponseEntity<SupplyInventoryResponseDto> addItem(@RequestBody SupplyInventoryRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(inventoryService.addItem(dto));
     }

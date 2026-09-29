@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +21,7 @@ public class ShelterController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('AGENCY_DIRECTOR','EMERGENCY_DISPATCHER')")
     public ResponseEntity<ReliefShelterResponseDto> registerShelter(@RequestBody ReliefShelterRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(shelterService.registerShelter(dto));
     }
@@ -42,6 +44,7 @@ public class ShelterController {
     }
 
     @PatchMapping("/{id}/occupancy")
+    @PreAuthorize("hasAnyRole('AGENCY_DIRECTOR','EMERGENCY_DISPATCHER')")
     public ResponseEntity<ReliefShelterResponseDto> adjustOccupancy(@PathVariable Long id,
                                                                       @RequestParam Integer intakeCount) {
         return ResponseEntity.ok(shelterService.adjustOccupancy(id, intakeCount));

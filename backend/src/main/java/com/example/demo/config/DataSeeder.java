@@ -5,10 +5,12 @@ import com.example.demo.repository.PersonnelAccountRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("dev")
 public class DataSeeder implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
@@ -35,11 +37,6 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             personnelAccountRepository.save(admin);
             log.info("[DataSeeder] Default admin account created: username=admin, password=admin123");
-        } else {
-            admin.setPasswordHash(passwordEncoder.encode("admin123"));
-            admin.setActive(true);
-            personnelAccountRepository.save(admin);
-            log.info("[DataSeeder] Default admin account updated: password=admin123");
         }
 
         PersonnelAccount dispatcher = personnelAccountRepository.findByUsername("dispatcher").orElse(null);
@@ -55,12 +52,6 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             personnelAccountRepository.save(dispatcher);
             log.info("[DataSeeder] Default dispatcher account created.");
-        } else {
-            dispatcher.setPasswordHash(passwordEncoder.encode("dispatch123"));
-            dispatcher.setRole("EMERGENCY_DISPATCHER");
-            dispatcher.setActive(true);
-            personnelAccountRepository.save(dispatcher);
-            log.info("[DataSeeder] Default dispatcher account updated.");
         }
     }
 }

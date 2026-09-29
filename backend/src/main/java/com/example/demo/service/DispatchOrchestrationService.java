@@ -58,6 +58,7 @@ public class DispatchOrchestrationService {
                 .targetIncident(incident)
                 .inventory(inventory)
                 .dispatchedQuantity(dto.getDispatchedQuantity())
+                // PENDING_APPROVAL is a reserved status and unused; dispatches transition directly to IN_TRANSIT upon request.
                 .dispatchStatus("IN_TRANSIT")
                 .build();
 

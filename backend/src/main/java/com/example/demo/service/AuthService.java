@@ -10,10 +10,12 @@ import com.example.demo.dto.AuthResponseDto;
 import com.example.demo.dto.PersonnelAccountRequestDto;
 import com.example.demo.dto.PersonnelAccountResponseDto;
 import com.example.demo.entity.PersonnelAccount;
+import com.example.demo.exception.AccountDeactivatedException;
 import com.example.demo.exception.BusinessValidationException;
 import com.example.demo.exception.InvalidCredentialsException;
 import com.example.demo.exception.ResourceNotFoundException;
 import com.example.demo.repository.PersonnelAccountRepository;
+import java.util.Map;
 
 @Service
 public class AuthService {
@@ -52,7 +54,7 @@ public class AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + dto.getUsername()));
 
         if (!account.isActive()) {
-            throw new BusinessValidationException("Account is deactivated.");
+            throw new AccountDeactivatedException("Account is deactivated.");
         }
 
         if (!passwordEncoder.matches(dto.getPassword(), account.getPasswordHash())) {
@@ -65,7 +67,7 @@ public class AuthService {
                         java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + account.getRole()))
                 );
 
-        String token = jwtService.generateToken(userDetails);
+        String token = jwtService.generateToken(Map.of("role", account.getRole()), userDetails);
 
         return AuthResponseDto.builder()
                 .accessToken(token)
