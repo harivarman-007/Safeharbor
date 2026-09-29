@@ -69,7 +69,15 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
       onClose();
     } catch (err) {
       console.error(err);
-      const msg = err?.message || err || 'Operation failed. Please try again.';
+      // err is the structured { status, message } payload from rejectWithValue
+      const status = err?.status;
+      let msg;
+      if (status >= 500 || status === undefined) {
+        msg = 'Incident could not be logged due to a server error. Please retry.';
+      } else {
+        // 400 / 409 — surface the backend message directly
+        msg = err?.message || 'Operation failed. Please retry.';
+      }
       if (onAddNotification) {
         onAddNotification(msg, 'error');
       } else {

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import com.example.demo.exception.BusinessValidationException;
+import com.example.demo.exception.DuplicateResourceException;
 
 @Service
 public class InventoryLogisticsService {
@@ -24,7 +24,7 @@ public class InventoryLogisticsService {
 
     public SupplyInventoryResponseDto addNewSupplyItem(SupplyInventoryRequestDto dto) {
         if (dto.getItemName() != null && inventoryRepository.findByItemName(dto.getItemName()).isPresent()) {
-            throw new BusinessValidationException("Item with name already exists: " + dto.getItemName());
+            throw new DuplicateResourceException("Item with name already exists: " + dto.getItemName());
         }
         SupplyInventory item = SupplyInventory.builder()
                 .itemName(dto.getItemName())

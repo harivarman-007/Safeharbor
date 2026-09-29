@@ -74,7 +74,7 @@ const Register = ({ setView, onAddNotification }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Personnel Email *</label>
+            <label htmlFor="email">Email *</label>
             <input
               id="email"
               type="email"
@@ -105,7 +105,7 @@ const Register = ({ setView, onAddNotification }) => {
               required
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="John Doe"
+              placeholder="Jane Smith"
             />
           </div>
 
@@ -123,14 +123,14 @@ const Register = ({ setView, onAddNotification }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="reg-contact">Contact Number *</label>
+            <label htmlFor="reg-contact">Emergency Contact *</label>
             <input
               id="reg-contact"
               type="text"
               required
               value={emergencyContact}
               onChange={(e) => setEmergencyContact(e.target.value)}
-              placeholder="+1-234-567-8900"
+              placeholder="1234567890"
             />
           </div>
 

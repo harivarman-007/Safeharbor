@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as authService from '../../services/authService';
 
   const getInitialUser = () => {
@@ -92,7 +92,7 @@ const authSlice = createSlice({
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Register
       .addCase(register.pending, (state) => {
@@ -107,7 +107,7 @@ const authSlice = createSlice({
       })
       .addCase(register.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
         state.isSuccess = false;
       });
   },
@@ -115,3 +115,4 @@ const authSlice = createSlice({
 
 export const { clearAuthError, resetRegisterSuccess, logout } = authSlice.actions;
 export default authSlice.reducer;
+
