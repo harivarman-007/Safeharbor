@@ -22,6 +22,7 @@ public class DispatchController {
     }
 
     @PostMapping("/request")
+    @PreAuthorize("hasAnyRole('AGENCY_DIRECTOR', 'EMERGENCY_DISPATCHER')")
     public ResponseEntity<ResourceDispatchResponseDto> requestDispatch(@Valid @RequestBody ResourceDispatchRequestDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(dispatchService.requestDispatch(dto));
     }

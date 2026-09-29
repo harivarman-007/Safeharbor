@@ -94,6 +94,7 @@ const App = () => {
     setActiveTab(tab);
     const path = tab === 'home' ? '/' : `/${tab}`;
     navigate(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Synchronize view tab state if route changes directly

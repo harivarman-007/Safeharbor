@@ -17,6 +17,13 @@ export const updateIncidentStatus = async (id, status) => {
   return response.data;
 };
 
+export const assignIncidentResponder = async (id, personnelId) => {
+  const response = await api.post(`/incidents/${id}/assign`, null, {
+    params: { personnelId }
+  });
+  return response.data;
+};
+
 export const deleteIncident = async (id) => {
   const response = await api.delete(`/incidents/${id}`);
   return response.data;

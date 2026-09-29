@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import ReactDOM from 'react-dom';
 import { reportIncident, modifyIncident } from '../../store/slices/incidentSlice';
 
 const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
@@ -72,7 +73,7 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div className="modal-overlay">
       <div className="modal-content">
         <button className="modal-close-btn" onClick={onClose}>x</button>
@@ -87,14 +88,14 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
               required
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Sector 7 Flood"
+              placeholder="e.g. Chennai Flood"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="type">Incident Type *</label>
+            <label htmlFor="incidentType">Incident Type *</label>
             <select
-              id="type"
+              id="incidentType"
               value={incidentType}
               onChange={(e) => setIncidentType(e.target.value)}
             >
@@ -106,9 +107,9 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="severity">Risk Severity Parameter *</label>
+            <label htmlFor="severityLevel">Severity Level *</label>
             <select
-              id="severity"
+              id="severityLevel"
               value={severityLevel}
               onChange={(e) => setSeverityLevel(e.target.value)}
             >
@@ -119,8 +120,8 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-            <div className="form-group">
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div className="form-group" style={{ flex: 1 }}>
               <label htmlFor="latitude">Latitude *</label>
               <input
                 id="latitude"
@@ -129,10 +130,10 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
                 required
                 value={latitude}
                 onChange={(e) => setLatitude(e.target.value)}
-                placeholder="34.0522"
+                placeholder="e.g. 13.0827"
               />
             </div>
-            <div className="form-group">
+            <div className="form-group" style={{ flex: 1 }}>
               <label htmlFor="longitude">Longitude *</label>
               <input
                 id="longitude"
@@ -141,7 +142,7 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
                 required
                 value={longitude}
                 onChange={(e) => setLongitude(e.target.value)}
-                placeholder="-118.2437"
+                placeholder="e.g. 80.2707"
               />
             </div>
           </div>
@@ -167,7 +168,8 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchInventory } from '../../store/slices/inventorySlice';
+import { fetchInventory, deleteInventoryItem } from '../../store/slices/inventorySlice';
 import EmptyState from '../common/EmptyState';
 import Pagination from '../common/Pagination';
 import SupplyInventoryForm from './SupplyInventoryForm';
@@ -32,6 +32,19 @@ const SupplyInventoryList = ({ onAddNotification }) => {
     setIsModalOpen(true);
   };
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete this inventory item permanently?')) {
+      try {
+        await dispatch(deleteInventoryItem(id)).unwrap();
+        if (onAddNotification) onAddNotification('Inventory item deleted.', 'success');
+        fetchItems();
+      } catch (err) {
+        alert(err || 'Failed to delete item.');
+      }
+    }
+  };
+
+  const isDirector = user && user.role === 'AGENCY_DIRECTOR';
   const canManage = user && (user.role === 'AGENCY_DIRECTOR' || user.role === 'EMERGENCY_DISPATCHER');
 
   return (
@@ -85,13 +98,24 @@ const SupplyInventoryList = ({ onAddNotification }) => {
                       </td>
                       {canManage && (
                         <td>
-                          <button
-                            className="btn btn-secondary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                            onClick={() => handleEdit(item)}
-                          >
-                            Update Stock
-                          </button>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handleEdit(item)}
+                            >
+                              Edit
+                            </button>
+                            {isDirector && (
+                              <button
+                                className="btn btn-danger"
+                                style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                                onClick={() => handleDelete(item.id)}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
                         </td>
                       )}
                     </tr>

@@ -37,6 +37,18 @@ export const updateStock = createAsyncThunk(
   }
 );
 
+export const deleteInventoryItem = createAsyncThunk(
+  'inventory/deleteItem',
+  async (id, { rejectWithValue }) => {
+    try {
+      await inventoryService.deleteInventoryItem(id);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const initialState = {
   items: [],
   shortages: [],
@@ -112,6 +124,20 @@ const inventorySlice = createSlice({
         state.shortages = updateShortages(state.items);
       })
       .addCase(updateStock.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Delete Item
+      .addCase(deleteInventoryItem.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteInventoryItem.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = state.items.filter(item => item.id !== action.payload);
+        state.shortages = updateShortages(state.items);
+      })
+      .addCase(deleteInventoryItem.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

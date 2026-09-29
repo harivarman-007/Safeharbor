@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
+import ReactDOM from 'react-dom';
 import { registerShelter } from '../../store/slices/shelterSlice';
 
 const ReliefShelterForm = ({ onClose, onAddNotification }) => {
@@ -40,7 +41,7 @@ const ReliefShelterForm = ({ onClose, onAddNotification }) => {
     }
   };
 
-  return (
+  return ReactDOM.createPortal(
     <div className="modal-overlay">
       <div className="modal-content">
         <button className="modal-close-btn" onClick={onClose}>x</button>
@@ -104,7 +105,8 @@ const ReliefShelterForm = ({ onClose, onAddNotification }) => {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

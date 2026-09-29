@@ -1,15 +1,19 @@
 package com.example.demo.service;
 
-import com.example.demo.config.JwtAuthenticationFilter;
-import com.example.demo.dto.*;
-import com.example.demo.entity.PersonnelAccount;
-import com.example.demo.exception.BusinessValidationException;
-import com.example.demo.exception.ResourceNotFoundException;
-import com.example.demo.repository.PersonnelAccountRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import com.example.demo.dto.AuthRequestDto;
+import com.example.demo.dto.AuthResponseDto;
+import com.example.demo.dto.PersonnelAccountRequestDto;
+import com.example.demo.dto.PersonnelAccountResponseDto;
+import com.example.demo.entity.PersonnelAccount;
+import com.example.demo.exception.BusinessValidationException;
+import com.example.demo.exception.InvalidCredentialsException;
+import com.example.demo.exception.ResourceNotFoundException;
+import com.example.demo.repository.PersonnelAccountRepository;
 
 @Service
 public class AuthService {
@@ -47,8 +51,12 @@ public class AuthService {
         PersonnelAccount account = personnelAccountRepository.findByUsername(dto.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + dto.getUsername()));
 
+        if (!account.isActive()) {
+            throw new BusinessValidationException("Account is deactivated.");
+        }
+
         if (!passwordEncoder.matches(dto.getPassword(), account.getPasswordHash())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new InvalidCredentialsException("Invalid username or password.");
         }
 
         org.springframework.security.core.userdetails.User userDetails =
@@ -68,7 +76,24 @@ public class AuthService {
                 .build();
     }
 
-    public Page<PersonnelAccountResponseDto> getAllPersonnel(Pageable pageable) {
+    public AuthResponseDto registerPersonnel(PersonnelAccountRequestDto dto) {
+        PersonnelAccountResponseDto reg = register(dto);
+        return login(new AuthRequestDto(dto.getUsername(), dto.getPassword()));
+    }
+
+    public AuthResponseDto authenticatePersonnel(AuthRequestDto dto) {
+        return login(dto);
+    }
+
+    public Page<PersonnelAccountResponseDto> getPaginatedAccounts(Pageable pageable) {
+        return getAllPersonnel(null, pageable);
+    }
+
+    public Page<PersonnelAccountResponseDto> getAllPersonnel(String role, Pageable pageable) {
+        if (role != null && !role.isBlank()) {
+            return personnelAccountRepository.findByRoleAndIsActiveTrue(role, pageable)
+                    .map(this::toResponseDto);
+        }
         return personnelAccountRepository.findAll(pageable).map(this::toResponseDto);
     }
 

@@ -15,6 +15,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DispatchOrchestrationService {
@@ -34,6 +35,7 @@ public class DispatchOrchestrationService {
         this.eventPublisher = eventPublisher;
     }
 
+    @Transactional
     public ResourceDispatchResponseDto requestDispatch(ResourceDispatchRequestDto dto) {
         DisasterIncident incident = incidentRepository.findById(dto.getTargetIncidentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + dto.getTargetIncidentId()));
@@ -49,11 +51,14 @@ public class DispatchOrchestrationService {
         inventory.setReservedQuantity(inventory.getReservedQuantity() + dto.getDispatchedQuantity());
         inventoryRepository.save(inventory);
 
+        incident.setStatus("ASSIGNED");
+        incidentRepository.save(incident);
+
         ResourceDispatch dispatch = ResourceDispatch.builder()
                 .targetIncident(incident)
                 .inventory(inventory)
                 .dispatchedQuantity(dto.getDispatchedQuantity())
-                .dispatchStatus("PENDING_APPROVAL")
+                .dispatchStatus("IN_TRANSIT")
                 .build();
 
         return toResponseDto(dispatchRepository.save(dispatch));
@@ -63,10 +68,26 @@ public class DispatchOrchestrationService {
         return dispatchRepository.findAll(pageable).map(this::toResponseDto);
     }
 
+    public Page<ResourceDispatchResponseDto> getPaginatedDispatches(Pageable pageable) {
+        return getAllDispatches(pageable);
+    }
+
+    @Transactional
     public ResourceDispatchResponseDto fulfillDispatch(Long id) {
         ResourceDispatch dispatch = dispatchRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Dispatch not found: " + id));
-        dispatch.setDispatchStatus("IN_TRANSIT");
+
+        if ("DELIVERED".equals(dispatch.getDispatchStatus())) {
+            throw new BusinessValidationException("Dispatch is already delivered.");
+        }
+
+        dispatch.setDispatchStatus("DELIVERED");
+
+        SupplyInventory inventory = dispatch.getInventory();
+        int qty = dispatch.getDispatchedQuantity();
+        inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - qty));
+        inventoryRepository.save(inventory);
+
         ResourceDispatch saved = dispatchRepository.save(dispatch);
 
         eventPublisher.publishEvent(new DispatchFulfilledEvent(this,
@@ -77,11 +98,20 @@ public class DispatchOrchestrationService {
         return toResponseDto(saved);
     }
 
+    @Transactional
     public void deleteDispatch(Long id) {
-        if (!dispatchRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Dispatch not found: " + id);
+        ResourceDispatch dispatch = dispatchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dispatch not found: " + id));
+
+        if (!"DELIVERED".equals(dispatch.getDispatchStatus()) && !"CANCELLED".equals(dispatch.getDispatchStatus())) {
+            SupplyInventory inventory = dispatch.getInventory();
+            int qty = dispatch.getDispatchedQuantity();
+            inventory.setAvailableQuantity(inventory.getAvailableQuantity() + qty);
+            inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - qty));
+            inventoryRepository.save(inventory);
         }
-        dispatchRepository.deleteById(id);
+
+        dispatchRepository.delete(dispatch);
     }
 
     private ResourceDispatchResponseDto toResponseDto(ResourceDispatch d) {

@@ -52,40 +52,42 @@ const Navbar = ({ activeTab, onTabChange }) => {
           <a
             href="#home"
             className={`nav-link ${activeTab === 'home' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onTabChange('home');
-            }}
+            onClick={(e) => { e.preventDefault(); onTabChange('home'); }}
           >
             Global Stats
           </a>
           <a
             href="#incidents"
             className={`nav-link ${activeTab === 'incidents' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onTabChange('incidents');
-            }}
+            onClick={(e) => { e.preventDefault(); onTabChange('incidents'); }}
           >
             All Incidents
           </a>
           <a
+            href="#dispatches"
+            className={`nav-link ${activeTab === 'dispatches' ? 'active' : ''}`}
+            onClick={(e) => { e.preventDefault(); onTabChange('dispatches'); }}
+          >
+            Dispatches
+          </a>
+          <a
             href="#inventory"
             className={`nav-link ${activeTab === 'inventory' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onTabChange('inventory');
-            }}
+            onClick={(e) => { e.preventDefault(); onTabChange('inventory'); }}
           >
             Inventory
           </a>
           <a
+            href="#shelters"
+            className={`nav-link ${activeTab === 'shelters' ? 'active' : ''}`}
+            onClick={(e) => { e.preventDefault(); onTabChange('shelters'); }}
+          >
+            Shelters
+          </a>
+          <a
             href="#personnel"
             className={`nav-link ${activeTab === 'personnel' ? 'active' : ''}`}
-            onClick={(e) => {
-              e.preventDefault();
-              onTabChange('personnel');
-            }}
+            onClick={(e) => { e.preventDefault(); onTabChange('personnel'); }}
           >
             Personnel
           </a>

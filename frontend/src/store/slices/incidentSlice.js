@@ -37,6 +37,18 @@ export const changeIncidentStatus = createAsyncThunk(
   }
 );
 
+export const assignIncidentResponder = createAsyncThunk(
+  'incidents/assignResponder',
+  async ({ id, personnelId }, { rejectWithValue }) => {
+    try {
+      const result = await incidentService.assignIncidentResponder(id, personnelId);
+      return result;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 export const removeIncident = createAsyncThunk(
   'incidents/delete',
   async (id, { rejectWithValue }) => {
@@ -131,6 +143,16 @@ const incidentSlice = createSlice({
         }
       })
       .addCase(changeIncidentStatus.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      // Assign responder
+      .addCase(assignIncidentResponder.fulfilled, (state, action) => {
+        const index = state.items.findIndex(item => item.id === action.payload.id);
+        if (index !== -1) {
+          state.items[index] = action.payload;
+        }
+      })
+      .addCase(assignIncidentResponder.rejected, (state, action) => {
         state.error = action.payload;
       })
       // Delete

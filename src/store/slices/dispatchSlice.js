@@ -37,6 +37,18 @@ export const fulfillDispatch = createAsyncThunk(
   }
 );
 
+export const deleteDispatch = createAsyncThunk(
+  'dispatches/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await dispatchService.deleteDispatch(id);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const initialState = {
   items: [],
   loading: false,
@@ -104,6 +116,19 @@ const dispatchSlice = createSlice({
         }
       })
       .addCase(fulfillDispatch.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Delete
+      .addCase(deleteDispatch.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteDispatch.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = state.items.filter(item => item.id !== action.payload);
+      })
+      .addCase(deleteDispatch.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

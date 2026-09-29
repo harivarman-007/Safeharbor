@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import com.example.demo.exception.BusinessValidationException;
+
 @Service
 public class InventoryLogisticsService {
 
@@ -20,7 +22,10 @@ public class InventoryLogisticsService {
         this.inventoryRepository = inventoryRepository;
     }
 
-    public SupplyInventoryResponseDto addItem(SupplyInventoryRequestDto dto) {
+    public SupplyInventoryResponseDto addNewSupplyItem(SupplyInventoryRequestDto dto) {
+        if (dto.getItemName() != null && inventoryRepository.findByItemName(dto.getItemName()).isPresent()) {
+            throw new BusinessValidationException("Item with name already exists: " + dto.getItemName());
+        }
         SupplyInventory item = SupplyInventory.builder()
                 .itemName(dto.getItemName())
                 .category(dto.getCategory())
@@ -31,8 +36,16 @@ public class InventoryLogisticsService {
         return toResponseDto(inventoryRepository.save(item));
     }
 
+    public SupplyInventoryResponseDto addItem(SupplyInventoryRequestDto dto) {
+        return addNewSupplyItem(dto);
+    }
+
     public Page<SupplyInventoryResponseDto> getAllItems(Pageable pageable) {
         return inventoryRepository.findAll(pageable).map(this::toResponseDto);
+    }
+
+    public void updateInventory(Long id, Integer quantity) {
+        updateStock(id, quantity);
     }
 
     public SupplyInventoryResponseDto updateStock(Long id, Integer quantity) {
@@ -58,6 +71,10 @@ public class InventoryLogisticsService {
             throw new ResourceNotFoundException("Inventory item not found: " + id);
         }
         inventoryRepository.deleteById(id);
+    }
+
+    public List<SupplyInventoryResponseDto> getCriticalShortages() {
+        return getShortages();
     }
 
     public List<SupplyInventoryResponseDto> getShortages() {

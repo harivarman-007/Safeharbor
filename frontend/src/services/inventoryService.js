@@ -16,3 +16,13 @@ export const updateInventoryStock = async (id, quantity) => {
   });
   return response.data;
 };
+
+export const updateInventoryItem = async (id, data) => {
+  const response = await api.put(`/inventory/${id}`, data);
+  return response.data;
+};
+
+export const deleteInventoryItem = async (id) => {
+  await api.delete(`/inventory/${id}`);
+  return id;
+};

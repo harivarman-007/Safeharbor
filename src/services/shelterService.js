@@ -16,3 +16,13 @@ export const adjustShelterOccupancy = async (id, intakeCount) => {
   });
   return response.data;
 };
+
+export const updateShelter = async (id, data) => {
+  const response = await api.put(`/shelters/${id}`, data);
+  return response.data;
+};
+
+export const deleteShelter = async (id) => {
+  await api.delete(`/shelters/${id}`);
+  return id;
+};

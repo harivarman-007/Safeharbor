@@ -22,8 +22,9 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        if (!personnelAccountRepository.existsByUsername("admin")) {
-            PersonnelAccount admin = PersonnelAccount.builder()
+        PersonnelAccount admin = personnelAccountRepository.findByUsername("admin").orElse(null);
+        if (admin == null) {
+            admin = PersonnelAccount.builder()
                     .username("admin")
                     .passwordHash(passwordEncoder.encode("admin123"))
                     .fullName("Agency Director")
@@ -34,10 +35,16 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             personnelAccountRepository.save(admin);
             log.info("[DataSeeder] Default admin account created: username=admin, password=admin123");
+        } else {
+            admin.setPasswordHash(passwordEncoder.encode("admin123"));
+            admin.setActive(true);
+            personnelAccountRepository.save(admin);
+            log.info("[DataSeeder] Default admin account updated: password=admin123");
         }
 
-        if (!personnelAccountRepository.existsByUsername("dispatcher")) {
-            PersonnelAccount dispatcher = PersonnelAccount.builder()
+        PersonnelAccount dispatcher = personnelAccountRepository.findByUsername("dispatcher").orElse(null);
+        if (dispatcher == null) {
+            dispatcher = PersonnelAccount.builder()
                     .username("dispatcher")
                     .passwordHash(passwordEncoder.encode("dispatch123"))
                     .fullName("Emergency Dispatcher")
@@ -48,6 +55,12 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             personnelAccountRepository.save(dispatcher);
             log.info("[DataSeeder] Default dispatcher account created.");
+        } else {
+            dispatcher.setPasswordHash(passwordEncoder.encode("dispatch123"));
+            dispatcher.setRole("EMERGENCY_DISPATCHER");
+            dispatcher.setActive(true);
+            personnelAccountRepository.save(dispatcher);
+            log.info("[DataSeeder] Default dispatcher account updated.");
         }
     }
 }

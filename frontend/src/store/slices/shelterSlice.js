@@ -37,6 +37,30 @@ export const updateOccupancy = createAsyncThunk(
   }
 );
 
+export const updateShelter = createAsyncThunk(
+  'shelters/update',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const result = await shelterService.updateShelter(id, data);
+      return result;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
+export const deleteShelter = createAsyncThunk(
+  'shelters/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      await shelterService.deleteShelter(id);
+      return id;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const initialState = {
   items: [],
   loading: false,
@@ -105,6 +129,21 @@ const shelterSlice = createSlice({
       })
       .addCase(updateOccupancy.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      // Update Shelter
+      .addCase(updateShelter.fulfilled, (state, action) => {
+        const index = state.items.findIndex(item => item.id === action.payload.id);
+        if (index !== -1) state.items[index] = action.payload;
+      })
+      .addCase(updateShelter.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      // Delete Shelter
+      .addCase(deleteShelter.fulfilled, (state, action) => {
+        state.items = state.items.filter(item => item.id !== action.payload);
+      })
+      .addCase(deleteShelter.rejected, (state, action) => {
         state.error = action.payload;
       });
   },

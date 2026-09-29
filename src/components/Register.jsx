@@ -74,9 +74,9 @@ const Register = ({ setView, onAddNotification }) => {
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="reg-email">Email *</label>
+            <label htmlFor="email">Personnel Email *</label>
             <input
-              id="reg-email"
+              id="email"
               type="email"
               required
               value={email}
@@ -86,9 +86,9 @@ const Register = ({ setView, onAddNotification }) => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="reg-password">Password *</label>
+            <label htmlFor="password">Secured Password *</label>
             <input
-              id="reg-password"
+              id="password"
               type="password"
               required
               value={password}

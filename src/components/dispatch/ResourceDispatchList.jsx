@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchDispatches, fulfillDispatch } from '../../store/slices/dispatchSlice';
+import { fetchDispatches, fulfillDispatch, deleteDispatch } from '../../store/slices/dispatchSlice';
 import EmptyState from '../common/EmptyState';
 import Pagination from '../common/Pagination';
 import ResourceDispatchForm from './ResourceDispatchForm';
@@ -25,13 +25,25 @@ const ResourceDispatchList = ({ onAddNotification }) => {
     try {
       await dispatch(fulfillDispatch(id)).unwrap();
       if (onAddNotification) {
-        onAddNotification('Dispatch status updated successfully!', 'success');
-      } else {
-        alert('Dispatch status updated successfully!');
+        onAddNotification('Dispatch fulfilled — resources delivered!', 'success');
       }
       fetchItems();
     } catch (err) {
       alert(err || 'Failed to fulfill dispatch.');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Cancel this dispatch? Reserved inventory will be restored.')) {
+      try {
+        await dispatch(deleteDispatch(id)).unwrap();
+        if (onAddNotification) {
+          onAddNotification('Dispatch cancelled and inventory restored.', 'success');
+        }
+        fetchItems();
+      } catch (err) {
+        alert(err || 'Failed to cancel dispatch.');
+      }
     }
   };
 
@@ -40,7 +52,8 @@ const ResourceDispatchList = ({ onAddNotification }) => {
   };
 
   const canManage = user && (user.role === 'AGENCY_DIRECTOR' || user.role === 'EMERGENCY_DISPATCHER');
-  const canFulfill = user && (user.role === 'AGENCY_DIRECTOR' || user.role === 'LOGISTICS_COORDINATOR');
+  const canFulfill = user && user.role === 'AGENCY_DIRECTOR';
+  const canDelete = user && user.role === 'AGENCY_DIRECTOR';
 
   return (
     <div className="glass-panel">
@@ -78,8 +91,8 @@ const ResourceDispatchList = ({ onAddNotification }) => {
                   if (disp.dispatchStatus === 'CANCELLED') badgeClass = 'badge-danger';
                   if (disp.dispatchStatus === 'IN_TRANSIT') badgeClass = 'badge-warning';
 
-                  // Verify is IN_TRANSIT dispatch for fulfillment
-                  const showFulfillBtn = canFulfill && disp.dispatchStatus === 'IN_TRANSIT';
+                  // Verify is IN_TRANSIT (or legacy PENDING_APPROVAL) dispatch for fulfillment
+                  const showFulfillBtn = canFulfill && (disp.dispatchStatus === 'IN_TRANSIT' || disp.dispatchStatus === 'PENDING_APPROVAL');
 
                   return (
                     <tr key={disp.id}>
@@ -93,19 +106,29 @@ const ResourceDispatchList = ({ onAddNotification }) => {
                         {disp.initiatedAt ? new Date(disp.initiatedAt).toLocaleString() : 'N/A'}
                       </td>
                       <td>
-                        {showFulfillBtn ? (
-                          <button
-                            className="btn btn-primary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                            onClick={() => handleFulfill(disp.id)}
-                          >
-                            Fulfill
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                            No action
-                          </span>
-                        )}
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          {showFulfillBtn ? (
+                            <button
+                              className="btn btn-primary"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handleFulfill(disp.id)}
+                            >
+                              Fulfill
+                            </button>
+                          ) : null}
+                          {canDelete && disp.dispatchStatus === 'IN_TRANSIT' && (
+                            <button
+                              className="btn btn-danger"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handleDelete(disp.id)}
+                            >
+                              Cancel
+                            </button>
+                          )}
+                          {!showFulfillBtn && !(canDelete && disp.dispatchStatus === 'IN_TRANSIT') && (
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No action</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

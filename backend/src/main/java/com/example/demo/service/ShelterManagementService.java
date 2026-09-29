@@ -35,6 +35,10 @@ public class ShelterManagementService {
         return shelterRepository.findAll(pageable).map(this::toResponseDto);
     }
 
+    public Page<ReliefShelterResponseDto> getPaginatedShelters(Pageable pageable) {
+        return getAllShelters(pageable);
+    }
+
     public ReliefShelterResponseDto updateShelter(Long id, ReliefShelterRequestDto dto) {
         ReliefShelter shelter = shelterRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Shelter not found: " + id));

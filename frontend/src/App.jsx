@@ -42,7 +42,9 @@ const App = () => {
   const dispatchError = useSelector((state) => state.dispatches.error);
   const shelterError = useSelector((state) => state.shelters.error);
   const personnelError = useSelector((state) => state.personnel.error);
-  const globalError = authError || incidentError || inventoryError || dispatchError || shelterError || personnelError;
+  // Personnel 403 is expected for non-directors — only surface it for directors
+  const isDirector = user && user.role === 'AGENCY_DIRECTOR';
+  const globalError = authError || incidentError || inventoryError || dispatchError || shelterError || (isDirector ? personnelError : null);
 
   const [activeTab, setActiveTab] = useState('home');
   const [notifications, setNotifications] = useState([]);

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchShelters, updateOccupancy } from '../../store/slices/shelterSlice';
+import { fetchShelters, updateOccupancy, deleteShelter } from '../../store/slices/shelterSlice';
 import CapacityBar from '../common/CapacityBar';
 import EmptyState from '../common/EmptyState';
 import Pagination from '../common/Pagination';
+import OccupancyModal from '../common/OccupancyModal';
 import ReliefShelterForm from './ReliefShelterForm';
 
 const ReliefShelterList = ({ onAddNotification }) => {
@@ -13,6 +14,8 @@ const ReliefShelterList = ({ onAddNotification }) => {
 
   const [currentPage, setCurrentPage] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingShelter, setEditingShelter] = useState(null);
+  const [occupancyModal, setOccupancyModal] = useState({ isOpen: false, data: null });
 
   const fetchItems = () => {
     dispatch(fetchShelters({ page: currentPage, size: 10 }));
@@ -22,29 +25,15 @@ const ReliefShelterList = ({ onAddNotification }) => {
     fetchItems();
   }, [currentPage, dispatch]);
 
-  const handleAdjustOccupancy = async (id, currentOccupancy, maxCapacity) => {
-    const promptVal = window.prompt(
-      'Enter adjustment count (positive number to check-in, negative number to check-out):',
-      '0'
-    );
-    if (promptVal === null) return;
+  const handleAdjustOccupancy = (id, currentOccupancy, maxCapacity) => {
+    setOccupancyModal({
+      isOpen: true,
+      data: { id, currentOccupancy, maxCapacity }
+    });
+  };
 
-    const intakeCount = parseInt(promptVal, 10);
-    if (isNaN(intakeCount)) {
-      alert('Please enter a valid integer.');
-      return;
-    }
-
-    if (currentOccupancy + intakeCount < 0) {
-      alert('Occupancy cannot fall below 0.');
-      return;
-    }
-
-    if (currentOccupancy + intakeCount > maxCapacity) {
-      alert(`Occupancy cannot exceed max capacity of ${maxCapacity}.`);
-      return;
-    }
-
+  const handleOccupancySubmit = async (intakeCount) => {
+    const { id } = occupancyModal.data;
     try {
       await dispatch(updateOccupancy({ id, intakeCount })).unwrap();
       if (onAddNotification) {
@@ -59,9 +48,28 @@ const ReliefShelterList = ({ onAddNotification }) => {
   };
 
   const handleCreate = () => {
+    setEditingShelter(null);
     setIsModalOpen(true);
   };
 
+  const handleEdit = (shelter) => {
+    setEditingShelter(shelter);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Delete this shelter permanently?')) {
+      try {
+        await dispatch(deleteShelter(id)).unwrap();
+        if (onAddNotification) onAddNotification('Shelter removed successfully.', 'success');
+        fetchItems();
+      } catch (err) {
+        alert(err || 'Failed to delete shelter.');
+      }
+    }
+  };
+
+  const isDirector = user && user.role === 'AGENCY_DIRECTOR';
   const canManage = user && (user.role === 'AGENCY_DIRECTOR' || user.role === 'EMERGENCY_DISPATCHER');
 
   return (
@@ -105,19 +113,39 @@ const ReliefShelterList = ({ onAddNotification }) => {
                       />
                     </td>
                     <td>
-                      <button
-                        className="btn btn-secondary"
-                        style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                        onClick={() =>
-                          handleAdjustOccupancy(
-                            shelter.id,
-                            shelter.currentOccupancy,
-                            shelter.capacity
-                          )
-                        }
-                      >
-                        Adjust Occupancy
-                      </button>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                          onClick={() =>
+                            handleAdjustOccupancy(
+                              shelter.id,
+                              shelter.currentOccupancy,
+                              shelter.capacity
+                            )
+                          }
+                        >
+                          Occupancy
+                        </button>
+                        {isDirector && (
+                          <>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handleEdit(shelter)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-danger"
+                              style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => handleDelete(shelter.id)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -137,11 +165,23 @@ const ReliefShelterList = ({ onAddNotification }) => {
 
       {isModalOpen && (
         <ReliefShelterForm
+          shelter={editingShelter}
           onAddNotification={onAddNotification}
           onClose={() => {
             setIsModalOpen(false);
+            setEditingShelter(null);
             fetchItems();
           }}
+        />
+      )}
+
+      {occupancyModal.isOpen && (
+        <OccupancyModal
+          isOpen={occupancyModal.isOpen}
+          onClose={() => setOccupancyModal({ isOpen: false, data: null })}
+          onSubmit={handleOccupancySubmit}
+          currentOccupancy={occupancyModal.data?.currentOccupancy}
+          maxCapacity={occupancyModal.data?.maxCapacity}
         />
       )}
     </div>

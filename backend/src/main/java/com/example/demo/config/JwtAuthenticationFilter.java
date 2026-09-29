@@ -47,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             var accountOpt = personnelAccountRepository.findByUsername(username);
-            if (accountOpt.isPresent()) {
+            if (accountOpt.isPresent() && accountOpt.get().isActive()) {
                 var account = accountOpt.get();
                 UserDetails userDetails = User.builder()
                         .username(account.getUsername())

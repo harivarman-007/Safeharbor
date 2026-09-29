@@ -1,16 +1,26 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.DisasterIncidentRequestDto;
-import com.example.demo.dto.DisasterIncidentResponseDto;
-import com.example.demo.service.IncidentCoordinationService;
+import java.util.Map;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
+import com.example.demo.dto.DisasterIncidentRequestDto;
+import com.example.demo.dto.DisasterIncidentResponseDto;
+import com.example.demo.service.IncidentCoordinationService;
 
 @RestController
 @RequestMapping("/api/incidents")
@@ -29,8 +39,10 @@ public class IncidentController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<DisasterIncidentResponseDto>> getAllIncidents(Pageable pageable) {
-        return ResponseEntity.ok(incidentService.getAllIncidents(pageable));
+    public ResponseEntity<Page<DisasterIncidentResponseDto>> getAllIncidents(
+            @RequestParam(required = false) String status,
+            Pageable pageable) {
+        return ResponseEntity.ok(incidentService.getAllIncidents(status, pageable));
     }
 
     @GetMapping("/{id}")
@@ -54,5 +66,12 @@ public class IncidentController {
     public ResponseEntity<DisasterIncidentResponseDto> updateStatus(@PathVariable Long id,
                                                                      @RequestParam String status) {
         return ResponseEntity.ok(incidentService.updateStatus(id, status));
+    }
+
+    @PostMapping("/{id}/assign")
+    @PreAuthorize("hasRole('AGENCY_DIRECTOR')")
+    public ResponseEntity<DisasterIncidentResponseDto> assignResponder(@PathVariable Long id,
+                                                                       @RequestParam Long personnelId) {
+        return ResponseEntity.ok(incidentService.assignResponder(id, personnelId));
     }
 }
