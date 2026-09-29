@@ -1,0 +1,24 @@
+# SafeHarbor Backend – Environment Variable Template
+# -------------------------------------------------------
+# Copy this file to a local .env or set these variables in your shell /
+# CI secrets before starting the Spring Boot application.
+# DO NOT commit real credentials to source control.
+#
+# Usage (bash/zsh):
+#   export DB_USERNAME=root
+#   export DB_PASSWORD=<your_mysql_password>
+#   export JWT_SECRET=<64-char hex string>
+#   mvn spring-boot:run
+#
+# Usage (PowerShell):
+#   $env:DB_USERNAME="root"
+#   $env:DB_PASSWORD="<your_mysql_password>"
+#   $env:JWT_SECRET="<64-char hex string>"
+#   mvn spring-boot:run
+#
+# Generate a JWT secret (bash): openssl rand -hex 32
+# Generate a JWT secret (PowerShell): -join ((1..32) | % { '{0:X2}' -f (Get-Random -Max 256) })
+
+DB_USERNAME=root
+DB_PASSWORD=change_me
+JWT_SECRET=change_me_generate_with_openssl_rand_hex_32

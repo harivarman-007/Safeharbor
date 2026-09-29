@@ -1,10 +1,8 @@
 # Node
 node_modules/
-frontend/node_modules/
 
 # Vite / build outputs
 dist/
-frontend/dist/
 
 # Logs
 npm-debug.log*
@@ -12,7 +10,7 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
-# Environment
+# Environment – NEVER commit real .env files
 .env
 .env.local
 .env.*.local
@@ -26,15 +24,15 @@ Thumbs.db
 .idea/
 *.iml
 
-# Java / Maven
+# Java / Maven build artifacts
 target/
 backend/target/
 *.jar
+*.war
 
-# Coverage
+# Code coverage
 coverage/
 
 # Misc
-coverage/
 *.zip
 *.tar.gz
