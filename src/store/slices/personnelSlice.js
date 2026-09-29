@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as personnelService from '../../services/personnelService';
 
 export const fetchPersonnel = createAsyncThunk(
@@ -20,7 +20,7 @@ export const deactivatePersonnel = createAsyncThunk(
       await personnelService.deactivatePersonnel(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -64,7 +64,7 @@ const personnelSlice = createSlice({
       })
       .addCase(fetchPersonnel.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Deactivate
       .addCase(deactivatePersonnel.pending, (state) => {
@@ -80,10 +80,11 @@ const personnelSlice = createSlice({
       })
       .addCase(deactivatePersonnel.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       });
   },
 });
 
 export const { clearPersonnelError } = personnelSlice.actions;
 export default personnelSlice.reducer;
+

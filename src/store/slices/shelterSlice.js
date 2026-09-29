@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as shelterService from '../../services/shelterService';
 
 export const fetchShelters = createAsyncThunk(
@@ -20,7 +20,7 @@ export const registerShelter = createAsyncThunk(
       const result = await shelterService.registerShelter(data);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -32,7 +32,7 @@ export const updateOccupancy = createAsyncThunk(
       const result = await shelterService.adjustShelterOccupancy(id, intakeCount);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -44,7 +44,7 @@ export const updateShelter = createAsyncThunk(
       const result = await shelterService.updateShelter(id, data);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -56,7 +56,7 @@ export const deleteShelter = createAsyncThunk(
       await shelterService.deleteShelter(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -100,7 +100,7 @@ const shelterSlice = createSlice({
       })
       .addCase(fetchShelters.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Register
       .addCase(registerShelter.pending, (state) => {
@@ -113,7 +113,7 @@ const shelterSlice = createSlice({
       })
       .addCase(registerShelter.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Update Occupancy
       .addCase(updateOccupancy.pending, (state) => {
@@ -129,7 +129,7 @@ const shelterSlice = createSlice({
       })
       .addCase(updateOccupancy.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Update Shelter
       .addCase(updateShelter.fulfilled, (state, action) => {
@@ -137,17 +137,18 @@ const shelterSlice = createSlice({
         if (index !== -1) state.items[index] = action.payload;
       })
       .addCase(updateShelter.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Delete Shelter
       .addCase(deleteShelter.fulfilled, (state, action) => {
         state.items = state.items.filter(item => item.id !== action.payload);
       })
       .addCase(deleteShelter.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       });
   },
 });
 
 export const { clearShelterError } = shelterSlice.actions;
 export default shelterSlice.reducer;
+

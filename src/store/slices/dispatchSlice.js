@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as dispatchService from '../../services/dispatchService';
 
 export const fetchDispatches = createAsyncThunk(
@@ -20,7 +20,7 @@ export const requestDispatch = createAsyncThunk(
       const result = await dispatchService.requestDispatch(data);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -32,7 +32,7 @@ export const fulfillDispatch = createAsyncThunk(
       const result = await dispatchService.fulfillDispatch(id);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -44,7 +44,7 @@ export const deleteDispatch = createAsyncThunk(
       await dispatchService.deleteDispatch(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -88,7 +88,7 @@ const dispatchSlice = createSlice({
       })
       .addCase(fetchDispatches.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Request
       .addCase(requestDispatch.pending, (state) => {
@@ -101,7 +101,7 @@ const dispatchSlice = createSlice({
       })
       .addCase(requestDispatch.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Fulfill
       .addCase(fulfillDispatch.pending, (state) => {
@@ -117,7 +117,7 @@ const dispatchSlice = createSlice({
       })
       .addCase(fulfillDispatch.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Delete
       .addCase(deleteDispatch.pending, (state) => {
@@ -130,10 +130,11 @@ const dispatchSlice = createSlice({
       })
       .addCase(deleteDispatch.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       });
   },
 });
 
 export const { clearDispatchError } = dispatchSlice.actions;
 export default dispatchSlice.reducer;
+

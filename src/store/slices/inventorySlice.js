@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as inventoryService from '../../services/inventoryService';
 
 export const fetchInventory = createAsyncThunk(
@@ -20,7 +20,7 @@ export const addInventoryItem = createAsyncThunk(
       const result = await inventoryService.addInventoryItem(data);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -32,7 +32,7 @@ export const updateStock = createAsyncThunk(
       const result = await inventoryService.updateInventoryStock(id, quantity);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -44,7 +44,7 @@ export const deleteInventoryItem = createAsyncThunk(
       await inventoryService.deleteInventoryItem(id);
       return id;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -94,7 +94,7 @@ const inventorySlice = createSlice({
       })
       .addCase(fetchInventory.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Add Item
       .addCase(addInventoryItem.pending, (state) => {
@@ -108,7 +108,7 @@ const inventorySlice = createSlice({
       })
       .addCase(addInventoryItem.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Update Stock
       .addCase(updateStock.pending, (state) => {
@@ -125,7 +125,7 @@ const inventorySlice = createSlice({
       })
       .addCase(updateStock.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Delete Item
       .addCase(deleteInventoryItem.pending, (state) => {
@@ -139,10 +139,11 @@ const inventorySlice = createSlice({
       })
       .addCase(deleteInventoryItem.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       });
   },
 });
 
 export const { clearInventoryError } = inventorySlice.actions;
 export default inventorySlice.reducer;
+

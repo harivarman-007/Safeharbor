@@ -9,19 +9,19 @@ const DomainChart = ({ data }) => {
       <div className="bar-chart">
         {data && data.length > 0 ? (
           data.map((item, index) => {
-            const widthPercentage = (item.value / maxValue) * 100;
+            const heightPercentage = (item.value / maxValue) * 100;
             return (
-              <div key={index} className="chart-bar-row">
-                <span className="chart-label" title={item.label}>
-                  {item.label}
-                </span>
+              <div key={index} className="chart-bar-col">
+                <span className="chart-value">{item.value}</span>
                 <div className="chart-bar-wrapper">
                   <div
                     className="chart-bar-fill"
-                    style={{ width: `${widthPercentage}%` }}
+                    style={{ height: `${heightPercentage}%` }}
                   />
                 </div>
-                <span className="chart-value">{item.value}</span>
+                <span className="chart-label" title={item.label}>
+                  {item.label}
+                </span>
               </div>
             );
           })

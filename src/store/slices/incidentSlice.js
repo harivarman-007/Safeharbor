@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import * as incidentService from '../../services/incidentService';
 
 export const fetchIncidents = createAsyncThunk(
@@ -20,7 +20,7 @@ export const reportIncident = createAsyncThunk(
       const result = await incidentService.reportIncident(data);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -32,7 +32,7 @@ export const changeIncidentStatus = createAsyncThunk(
       const result = await incidentService.updateIncidentStatus(id, status);
       return { id, status, result };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -44,7 +44,7 @@ export const assignIncidentResponder = createAsyncThunk(
       const result = await incidentService.assignIncidentResponder(id, personnelId);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -56,7 +56,7 @@ export const removeIncident = createAsyncThunk(
       const response = await incidentService.deleteIncident(id);
       return { id, response };
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -68,7 +68,7 @@ export const modifyIncident = createAsyncThunk(
       const result = await incidentService.updateIncident(id, data);
       return result;
     } catch (err) {
-      return rejectWithValue(err.response?.data?.message || err.message);
+      return rejectWithValue({ status: err.response?.status, message: err.response?.data?.message || err.message });
     }
   }
 );
@@ -120,7 +120,7 @@ const incidentSlice = createSlice({
       })
       .addCase(fetchIncidents.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Report
       .addCase(reportIncident.pending, (state) => {
@@ -133,7 +133,7 @@ const incidentSlice = createSlice({
       })
       .addCase(reportIncident.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Change status
       .addCase(changeIncidentStatus.fulfilled, (state, action) => {
@@ -143,7 +143,7 @@ const incidentSlice = createSlice({
         }
       })
       .addCase(changeIncidentStatus.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Assign responder
       .addCase(assignIncidentResponder.fulfilled, (state, action) => {
@@ -153,14 +153,14 @@ const incidentSlice = createSlice({
         }
       })
       .addCase(assignIncidentResponder.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Delete
       .addCase(removeIncident.fulfilled, (state, action) => {
         state.items = state.items.filter(item => item.id !== action.payload.id);
       })
       .addCase(removeIncident.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       })
       // Modify
       .addCase(modifyIncident.fulfilled, (state, action) => {
@@ -170,10 +170,11 @@ const incidentSlice = createSlice({
         }
       })
       .addCase(modifyIncident.rejected, (state, action) => {
-        state.error = action.payload;
+        state.error = action.payload?.message ?? action.payload;
       });
   },
 });
 
 export const { selectIncident, setFilterStatus, clearIncidentError } = incidentSlice.actions;
 export default incidentSlice.reducer;
+

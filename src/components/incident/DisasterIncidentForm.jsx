@@ -69,14 +69,19 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
       onClose();
     } catch (err) {
       console.error(err);
-      alert(err || 'Operation failed');
+      const msg = err?.message || err || 'Operation failed. Please try again.';
+      if (onAddNotification) {
+        onAddNotification(msg, 'error');
+      } else {
+        alert(msg);
+      }
     }
   };
 
   return ReactDOM.createPortal(
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="modal-close-btn" onClick={onClose}>x</button>
+        <button className="modal-close-btn" onClick={onClose}>×</button>
         <h2 style={{ marginBottom: '1.5rem' }}>Log Disaster Incident</h2>
 
         <form onSubmit={handleSubmit}>
