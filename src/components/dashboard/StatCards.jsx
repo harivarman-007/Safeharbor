@@ -43,8 +43,8 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
         <span className="stat-card-subtitle">Supply shipments currently in transit</span>
       </div>
 
-      {/* Card 3: Available Shelters — Featured Turquoise Glass Card like the reference photo */}
-      <div className="glass-panel stat-card stat-card-turquoise">
+      {/* Card 3: Available Shelters */}
+      <div className="glass-panel stat-card">
         <div className="stat-card-header">
           <span className="stat-card-title">Shelters</span>
           <span className="card-tag">Online</span>
@@ -52,12 +52,12 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
         <div className="stat-card-value">{availableShelters}</div>
         <div className="stat-card-meta">
           <div className="meta-row">
-            <span className="meta-label">TYPE</span>
-            <span className="meta-val">TURQUOISE</span>
+            <span className="meta-label">FACILITY</span>
+            <span className="meta-val">AVAILABLE</span>
           </div>
           <div className="meta-row">
-            <span className="meta-label">HEX</span>
-            <span className="meta-val">#99E1D9</span>
+            <span className="meta-label">CAPACITY</span>
+            <span className="meta-val">OPEN</span>
           </div>
         </div>
         <span className="stat-card-subtitle">Operational relief facilities open</span>
