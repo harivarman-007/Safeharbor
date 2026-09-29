@@ -15,6 +15,11 @@ export const fulfillDispatch = async (id) => {
   return response.data;
 };
 
+export const updateDispatch = async (id, data) => {
+  const response = await api.put(`/dispatches/${id}`, data);
+  return response.data;
+};
+
 export const deleteDispatch = async (id) => {
   await api.delete(`/dispatches/${id}`);
   return id;

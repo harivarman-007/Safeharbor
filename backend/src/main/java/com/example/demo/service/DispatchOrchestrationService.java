@@ -39,6 +39,11 @@ public class DispatchOrchestrationService {
     public ResourceDispatchResponseDto requestDispatch(ResourceDispatchRequestDto dto) {
         DisasterIncident incident = incidentRepository.findById(dto.getTargetIncidentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Incident not found: " + dto.getTargetIncidentId()));
+
+        if ("RESOLVED".equals(incident.getStatus()) || "CANCELLED".equals(incident.getStatus())) {
+            throw new BusinessValidationException("Cannot dispatch resources to incident with terminal status: " + incident.getStatus());
+        }
+
         SupplyInventory inventory = inventoryRepository.findById(dto.getInventoryItemId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory item not found: " + dto.getInventoryItemId()));
 
@@ -113,6 +118,47 @@ public class DispatchOrchestrationService {
         }
 
         dispatchRepository.delete(dispatch);
+    }
+
+    @Transactional
+    public ResourceDispatchResponseDto updateDispatch(Long id, ResourceDispatchRequestDto dto) {
+        Integer newQuantity = dto.getDispatchedQuantity();
+        if (newQuantity == null || newQuantity <= 0) {
+            throw new BusinessValidationException("Dispatched quantity must be greater than 0.");
+        }
+        return updateDispatch(id, newQuantity);
+    }
+
+    @Transactional
+    public ResourceDispatchResponseDto updateDispatch(Long id, Integer newQuantity) {
+        if (newQuantity == null || newQuantity <= 0) {
+            throw new BusinessValidationException("Dispatched quantity must be greater than 0.");
+        }
+        ResourceDispatch dispatch = dispatchRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Dispatch not found: " + id));
+
+        if (!"IN_TRANSIT".equals(dispatch.getDispatchStatus())) {
+            throw new BusinessValidationException("Only IN_TRANSIT dispatches can be updated.");
+        }
+
+        int diff = newQuantity - dispatch.getDispatchedQuantity();
+        SupplyInventory inventory = dispatch.getInventory();
+
+        if (diff > 0) {
+            if (inventory.getAvailableQuantity() < diff) {
+                throw new BusinessValidationException("Insufficient inventory to increase dispatch quantity.");
+            }
+            inventory.setAvailableQuantity(inventory.getAvailableQuantity() - diff);
+            inventory.setReservedQuantity(inventory.getReservedQuantity() + diff);
+        } else if (diff < 0) {
+            int releaseQty = -diff;
+            inventory.setAvailableQuantity(inventory.getAvailableQuantity() + releaseQty);
+            inventory.setReservedQuantity(Math.max(0, inventory.getReservedQuantity() - releaseQty));
+        }
+
+        inventoryRepository.save(inventory);
+        dispatch.setDispatchedQuantity(newQuantity);
+        return toResponseDto(dispatchRepository.save(dispatch));
     }
 
     private ResourceDispatchResponseDto toResponseDto(ResourceDispatch d) {

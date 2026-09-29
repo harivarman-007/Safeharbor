@@ -38,6 +38,13 @@ public class DispatchController {
         return ResponseEntity.ok(dispatchService.fulfillDispatch(id));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('AGENCY_DIRECTOR', 'EMERGENCY_DISPATCHER')")
+    public ResponseEntity<ResourceDispatchResponseDto> updateDispatch(@PathVariable Long id,
+                                                                       @RequestBody ResourceDispatchRequestDto dto) {
+        return ResponseEntity.ok(dispatchService.updateDispatch(id, dto));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDispatch(@PathVariable Long id) {
         dispatchService.deleteDispatch(id);
