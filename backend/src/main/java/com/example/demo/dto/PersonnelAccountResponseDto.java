@@ -1,5 +1,7 @@
 package com.example.demo.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class PersonnelAccountResponseDto {
     private Long id;
     private String username;
@@ -7,6 +9,7 @@ public class PersonnelAccountResponseDto {
     private String role;
     private String contactNumber;
     private String assignedRegion;
+    @JsonProperty("isActive")
     private boolean isActive;
 
     public PersonnelAccountResponseDto() {}
@@ -39,7 +42,9 @@ public class PersonnelAccountResponseDto {
     public String getAssignedRegion() { return assignedRegion; }
     public void setAssignedRegion(String assignedRegion) { this.assignedRegion = assignedRegion; }
 
+    @JsonProperty("isActive")
     public boolean isActive() { return isActive; }
+    @JsonProperty("isActive")
     public void setActive(boolean isActive) { this.isActive = isActive; }
 
     public static Builder builder() { return new Builder(); }
