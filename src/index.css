@@ -106,10 +106,14 @@ textarea{resize:vertical;min-height:80px}
 .search-input-wrapper input{width:100%}
 .filter-select-wrapper select{min-width:140px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);display:flex;align-items:center;justify-content:center;z-index:1000;padding:2rem;backdrop-filter:blur(2px)}
-.modal-content{background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:2rem 2rem 1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
-.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border-default)}
-.modal-close-btn{background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:1.2rem;line-height:1;padding:0.25rem;transition:color var(--t-fast)}
+.modal-content{position:relative;background:var(--bg-surface);border:1px solid var(--border-strong);border-radius:var(--radius-lg);padding:2rem 2rem 1.5rem;width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border-default)}
+.modal-header h2,.modal-header h3{margin:0;font-size:1.25rem}
+.modal-close-btn{background:none;border:none;cursor:pointer;color:var(--text-tertiary);font-size:1.35rem;line-height:1;padding:0.25rem 0.5rem;transition:color var(--t-fast);display:flex;align-items:center;justify-content:center}
 .modal-close-btn:hover{color:var(--text-primary)}
+.modal-content > .modal-close-btn{position:absolute;top:1.5rem;right:1.5rem}
+.modal-header .modal-close-btn{position:static}
+.mono-date{font-family:var(--font-mono);font-size:0.8rem;letter-spacing:0.02em;font-variant-numeric:tabular-nums;white-space:nowrap}
 .modal-actions{display:flex;gap:0.75rem;justify-content:flex-end;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border-default)}
 .notification-stack-container{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:0.5rem;max-width:360px}
 .notification-toast{display:flex;align-items:flex-start;justify-content:space-between;gap:0.75rem;padding:0.85rem 1rem;border-radius:var(--radius-md);border:1px solid var(--border-strong);background:var(--bg-elevated);font-size:0.82rem;color:var(--text-primary);animation:toastIn 0.18s ease-out;box-shadow:0 8px 24px rgba(0,0,0,0.4)}

@@ -71,8 +71,10 @@ const SupplyInventoryForm = ({ item, onClose, onAddNotification }) => {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="modal-close-btn" onClick={onClose}>x</button>
-        <h2>Manage Survival Asset</h2>
+        <div className="modal-header">
+          <h2>Manage Survival Asset</h2>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">×</button>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
           <div className="form-group">

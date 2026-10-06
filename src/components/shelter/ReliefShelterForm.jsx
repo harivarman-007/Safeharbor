@@ -44,8 +44,10 @@ const ReliefShelterForm = ({ onClose, onAddNotification }) => {
   return ReactDOM.createPortal(
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="modal-close-btn" onClick={onClose}>x</button>
-        <h2>Register Relief Shelter</h2>
+        <div className="modal-header">
+          <h2>Register Relief Shelter</h2>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">×</button>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ marginTop: '1.25rem' }}>
           <div className="form-group">

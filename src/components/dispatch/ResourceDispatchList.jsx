@@ -4,6 +4,7 @@ import { fetchDispatches, fulfillDispatch, deleteDispatch } from '../../store/sl
 import EmptyState from '../common/EmptyState';
 import Pagination from '../common/Pagination';
 import ResourceDispatchForm from './ResourceDispatchForm';
+import { formatDateTime } from '../../utils/dateUtils';
 
 const ResourceDispatchList = ({ onAddNotification }) => {
   const dispatch = useDispatch();
@@ -102,8 +103,8 @@ const ResourceDispatchList = ({ onAddNotification }) => {
                       <td>
                         <span className={`badge ${badgeClass}`}>{disp.dispatchStatus}</span>
                       </td>
-                      <td>
-                        {disp.initiatedAt ? new Date(disp.initiatedAt).toLocaleString() : 'N/A'}
+                      <td className="mono-date">
+                        {formatDateTime(disp.initiatedAt)}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>

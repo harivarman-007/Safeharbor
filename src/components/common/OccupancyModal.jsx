@@ -40,7 +40,10 @@ const OccupancyModal = ({ isOpen, onClose, onSubmit, currentOccupancy, maxCapaci
   return (
     <div className="modal-overlay" onClick={handleClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h3>Adjust Occupancy</h3>
+        <div className="modal-header">
+          <h3>Adjust Occupancy</h3>
+          <button className="modal-close-btn" onClick={handleClose} aria-label="Close modal">×</button>
+        </div>
         <div className="occupancy-info">
           <p><strong>Current Occupancy:</strong> {currentOccupancy}</p>
           <p><strong>Max Capacity:</strong> {maxCapacity}</p>

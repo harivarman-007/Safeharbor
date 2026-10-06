@@ -89,8 +89,10 @@ const DisasterIncidentForm = ({ incident, onClose, onAddNotification }) => {
   return ReactDOM.createPortal(
     <div className="modal-overlay">
       <div className="modal-content">
-        <button className="modal-close-btn" onClick={onClose}>×</button>
-        <h2 style={{ marginBottom: '1.5rem' }}>Log Disaster Incident</h2>
+        <div className="modal-header">
+          <h2>Log Disaster Incident</h2>
+          <button className="modal-close-btn" onClick={onClose} aria-label="Close modal">×</button>
+        </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
