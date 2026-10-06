@@ -2,6 +2,7 @@ import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { logout } from '../../store/slices/authSlice';
+import ThemeToggle from './ThemeToggle';
 
 const Navbar = ({ activeTab, onTabChange }) => {
   const dispatch = useDispatch();
@@ -173,6 +174,8 @@ const Navbar = ({ activeTab, onTabChange }) => {
       </Link>
 
       <div className="navbar-links">{renderLinks()}</div>
+
+      <ThemeToggle />
 
       {user && (
         <div className="navbar-user">
