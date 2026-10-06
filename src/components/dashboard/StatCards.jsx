@@ -4,10 +4,10 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
   return (
     <div className="dashboard-grid">
       {/* Card 1: Active Incidents */}
-      <div className="glass-panel stat-card">
+      <div className="stat-card-mono">
         <div className="stat-card-header">
-          <span className="stat-card-title">Incidents</span>
-          <span className="card-tag">Active</span>
+          <span className="stat-card-title">INCIDENTS</span>
+          <span className="mono-tag tag-danger">LIVE</span>
         </div>
         <div className="stat-card-value">{activeIncidents}</div>
         <div className="stat-card-meta">
@@ -20,14 +20,14 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
             <span className="meta-val">URGENT</span>
           </div>
         </div>
-        <span className="stat-card-subtitle">Active disaster events requiring deployment</span>
+        <span className="stat-card-subtitle">Disaster events requiring active response</span>
       </div>
 
       {/* Card 2: Pending Dispatches */}
-      <div className="glass-panel stat-card">
+      <div className="stat-card-mono">
         <div className="stat-card-header">
-          <span className="stat-card-title">Dispatches</span>
-          <span className="card-tag">Transit</span>
+          <span className="stat-card-title">DISPATCHES</span>
+          <span className="mono-tag tag-neutral">TRANSIT</span>
         </div>
         <div className="stat-card-value">{pendingDispatches}</div>
         <div className="stat-card-meta">
@@ -40,14 +40,14 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
             <span className="meta-val">LOGISTICS</span>
           </div>
         </div>
-        <span className="stat-card-subtitle">Supply shipments currently in transit</span>
+        <span className="stat-card-subtitle">Supply shipments currently en route</span>
       </div>
 
       {/* Card 3: Available Shelters */}
-      <div className="glass-panel stat-card">
+      <div className="stat-card-mono">
         <div className="stat-card-header">
-          <span className="stat-card-title">Shelters</span>
-          <span className="card-tag">Online</span>
+          <span className="stat-card-title">SHELTERS</span>
+          <span className="mono-tag tag-success">ACTIVE</span>
         </div>
         <div className="stat-card-value">{availableShelters}</div>
         <div className="stat-card-meta">
@@ -60,14 +60,14 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
             <span className="meta-val">OPEN</span>
           </div>
         </div>
-        <span className="stat-card-subtitle">Operational relief facilities open</span>
+        <span className="stat-card-subtitle">Relief shelter locations ready for intake</span>
       </div>
 
       {/* Card 4: Critical Shortages */}
-      <div className="glass-panel stat-card">
+      <div className="stat-card-mono">
         <div className="stat-card-header">
-          <span className="stat-card-title">Shortages</span>
-          <span className="card-tag">Alert</span>
+          <span className="stat-card-title">SHORTAGES</span>
+          <span className="mono-tag tag-warning">DEFICIT</span>
         </div>
         <div className="stat-card-value">{criticalShortages}</div>
         <div className="stat-card-meta">
@@ -80,7 +80,7 @@ const StatCards = ({ activeIncidents, pendingDispatches, availableShelters, crit
             <span className="meta-val">REQUIRED</span>
           </div>
         </div>
-        <span className="stat-card-subtitle">Survival essentials below threshold</span>
+        <span className="stat-card-subtitle">Survival inventory below reserve line</span>
       </div>
     </div>
   );

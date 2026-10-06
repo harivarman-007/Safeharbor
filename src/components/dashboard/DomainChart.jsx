@@ -5,7 +5,10 @@ const DomainChart = ({ data }) => {
 
   return (
     <div className="chart-container">
-      <h3 style={{ marginBottom: '1.25rem' }}>Incident Distribution by Type</h3>
+      <div className="panel-header">
+        <h3 className="panel-title">INCIDENT DISTRIBUTION BY CLASSIFICATION</h3>
+        <span className="mono-tag tag-neutral">ACTIVE METRICS</span>
+      </div>
       <div className="bar-chart">
         {data && data.length > 0 ? (
           data.map((item, index) => {

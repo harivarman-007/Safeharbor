@@ -169,7 +169,7 @@ const Navbar = ({ activeTab, onTabChange }) => {
         className="navbar-brand"
         onClick={() => onTabChange && onTabChange('home')}
       >
-        SafeHarbor
+        SAFEHARBOR <span className="navbar-brand-sub">// OPS</span>
       </Link>
 
       <div className="navbar-links">{renderLinks()}</div>
@@ -178,9 +178,9 @@ const Navbar = ({ activeTab, onTabChange }) => {
         <div className="navbar-user">
           <div className="user-info">
             <span className="user-name">{user.fullName}</span>
-            <span className="user-role">{user.role.replace('_', ' ')}</span>
+            <span className="user-role-badge">[{user.role.replace('_', ' ')}]</span>
           </div>
-          <button className="btn btn-secondary" onClick={handleLogout}>
+          <button className="btn btn-secondary btn-sm" onClick={handleLogout}>
             Logout
           </button>
         </div>

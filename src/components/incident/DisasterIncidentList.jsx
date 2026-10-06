@@ -220,17 +220,17 @@ const DisasterIncidentList = ({ onAddNotification }) => {
                               <div style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
                                   className="btn btn-primary"
-                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', background: 'var(--success, #22c55e)' }}
+                                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                                   onClick={() => handleStatusChange(incident.id, 'RESOLVED')}
                                 >
-                                  ✓ Resolve
+                                  Resolve
                                 </button>
                                 <button
                                   className="btn btn-secondary"
                                   style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                                   onClick={() => handleStatusChange(incident.id, 'CANCELLED')}
                                 >
-                                  ✕ Cancel
+                                  Cancel
                                 </button>
                               </div>
                             )}

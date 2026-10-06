@@ -52,8 +52,10 @@ const App = () => {
   const inventoryError = useSelector((state) => state.inventory.error);
   const dispatchError = useSelector((state) => state.dispatches.error);
   const shelterError = useSelector((state) => state.shelters.error);
-  const personnelError = useSelector((state) => state.personnel.error);
-  const globalError = authError || incidentError || inventoryError || dispatchError || shelterError || personnelError;
+  const personnelError = useSelector((state) => state.personnel?.error ?? null);
+  const globalError = token
+    ? (incidentError || inventoryError || dispatchError || shelterError || personnelError)
+    : null;
 
   const [activeTab, setActiveTab] = useState(getActiveTabFromPath(location.pathname));
   const [notifications, setNotifications] = useState([]);

@@ -36,49 +36,77 @@ const Login = ({ setView, onAddNotification }) => {
 
   return (
     <div className="auth-wrapper">
-      <div className="glass-panel auth-card">
+      <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">SafeHarbor</div>
-          <p>Disaster Response Coordinator Portal</p>
+          <div className="auth-logo">SAFEHARBOR</div>
+          <p className="auth-subtitle">Operations Authentication System</p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="email">Personnel Email *</label>
+            <label htmlFor="email">Personnel Identity / Username</label>
             <input
               id="email"
-              type="email"
+              type="text"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter designated personnel email"
+              placeholder="e.g. admin or dispatcher"
+              autoComplete="username"
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="password">Secured Password *</label>
+            <label htmlFor="password">Access Secret / Password</label>
             <input
               id="password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter secured password credentials"
+              placeholder="Enter account password"
+              autoComplete="current-password"
             />
           </div>
 
           <button
             type="submit"
             className="btn btn-primary"
-            style={{ width: '100%', marginTop: '1rem' }}
+            style={{ width: '100%', marginTop: '0.75rem' }}
             disabled={loading}
           >
-            {loading ? 'Authenticating...' : 'Authenticate'}
+            {loading ? 'Authenticating...' : 'Sign In'}
           </button>
         </form>
 
+        <div className="demo-credentials-box">
+          <div className="demo-title">Quick Demo Access</div>
+          <div className="demo-buttons">
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                setEmail('admin');
+                setPassword('admin123');
+              }}
+            >
+              Director (admin)
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => {
+                setEmail('dispatcher');
+                setPassword('dispatch123');
+              }}
+            >
+              Dispatcher (dispatcher)
+            </button>
+          </div>
+        </div>
+
         <div className="auth-footer">
-          New deployment personnel?{' '}
+          <span>New personnel enrollment?</span>{' '}
           <a
             href="#register"
             className="auth-link"

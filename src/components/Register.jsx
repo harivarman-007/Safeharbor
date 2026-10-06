@@ -66,10 +66,10 @@ const Register = ({ setView, onAddNotification }) => {
 
   return (
     <div className="auth-wrapper">
-      <div className="glass-panel auth-card">
+      <div className="auth-card">
         <div className="auth-header">
-          <div className="auth-logo">SafeHarbor</div>
-          <p>Register New Personnel Account</p>
+          <div className="auth-logo">SAFEHARBOR</div>
+          <p className="auth-subtitle">New Personnel Enrollment</p>
         </div>
 
         <form onSubmit={handleSubmit}>
