@@ -30,6 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/api/auth/login") || path.startsWith("/api/auth/register");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
@@ -43,26 +49,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        username = jwtService.extractUsername(jwt);
 
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            var accountOpt = personnelAccountRepository.findByUsername(username);
-            if (accountOpt.isPresent() && accountOpt.get().isActive()) {
-                var account = accountOpt.get();
-                UserDetails userDetails = User.builder()
-                        .username(account.getUsername())
-                        .password(account.getPasswordHash())
-                        .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + account.getRole())))
-                        .build();
+        try {
+            username = jwtService.extractUsername(jwt);
 
-                if (jwtService.isTokenValid(jwt, userDetails)) {
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
-                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                var accountOpt = personnelAccountRepository.findByUsername(username);
+                if (accountOpt.isPresent() && accountOpt.get().isActive()) {
+                    var account = accountOpt.get();
+                    UserDetails userDetails = User.builder()
+                            .username(account.getUsername())
+                            .password(account.getPasswordHash())
+                            .authorities(List.of(new SimpleGrantedAuthority("ROLE_" + account.getRole())))
+                            .build();
+
+                    if (jwtService.isTokenValid(jwt, userDetails)) {
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                userDetails, null, userDetails.getAuthorities());
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                    }
                 }
             }
+        } catch (Exception e) {
+            // Invalid or expired token: allow filter chain to continue unauthenticated
         }
+
         filterChain.doFilter(request, response);
     }
 }
